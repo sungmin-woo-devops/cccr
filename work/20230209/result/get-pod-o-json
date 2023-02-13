@@ -1,0 +1,162 @@
+{
+    "apiVersion": "v1",
+    "kind": "Pod",
+    "metadata": {
+        "annotations": {
+            "cni.projectcalico.org/containerID": "b8d61003c3360d87c5865b923603b68a115b7432af07844541037fc847a6e85f",
+            "cni.projectcalico.org/podIP": "192.168.119.129/32",
+            "cni.projectcalico.org/podIPs": "192.168.119.129/32",
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{},\"name\":\"myapp-pod\",\"namespace\":\"default\"},\"spec\":{\"containers\":[{\"image\":\"ghcr.io/c1t1d0s7/go-myweb:alpine\",\"name\":\"myapp\",\"ports\":[{\"containerPort\":8080,\"protocol\":\"TCP\"}]}]}}\n"
+        },
+        "creationTimestamp": "2023-02-09T02:22:47Z",
+        "name": "myapp-pod",
+        "namespace": "default",
+        "resourceVersion": "2199",
+        "uid": "0c33ed78-ff9d-4ec6-906b-cc25cbbe02c7"
+    },
+    "spec": {
+        "containers": [
+            {
+                "image": "ghcr.io/c1t1d0s7/go-myweb:alpine",
+                "imagePullPolicy": "IfNotPresent",
+                "name": "myapp",
+                "ports": [
+                    {
+                        "containerPort": 8080,
+                        "protocol": "TCP"
+                    }
+                ],
+                "resources": {},
+                "terminationMessagePath": "/dev/termination-log",
+                "terminationMessagePolicy": "File",
+                "volumeMounts": [
+                    {
+                        "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                        "name": "kube-api-access-5cchk",
+                        "readOnly": true
+                    }
+                ]
+            }
+        ],
+        "dnsPolicy": "ClusterFirst",
+        "enableServiceLinks": true,
+        "nodeName": "kube-node3",
+        "preemptionPolicy": "PreemptLowerPriority",
+        "priority": 0,
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "securityContext": {},
+        "serviceAccount": "default",
+        "serviceAccountName": "default",
+        "terminationGracePeriodSeconds": 30,
+        "tolerations": [
+            {
+                "effect": "NoExecute",
+                "key": "node.kubernetes.io/not-ready",
+                "operator": "Exists",
+                "tolerationSeconds": 300
+            },
+            {
+                "effect": "NoExecute",
+                "key": "node.kubernetes.io/unreachable",
+                "operator": "Exists",
+                "tolerationSeconds": 300
+            }
+        ],
+        "volumes": [
+            {
+                "name": "kube-api-access-5cchk",
+                "projected": {
+                    "defaultMode": 420,
+                    "sources": [
+                        {
+                            "serviceAccountToken": {
+                                "expirationSeconds": 3607,
+                                "path": "token"
+                            }
+                        },
+                        {
+                            "configMap": {
+                                "items": [
+                                    {
+                                        "key": "ca.crt",
+                                        "path": "ca.crt"
+                                    }
+                                ],
+                                "name": "kube-root-ca.crt"
+                            }
+                        },
+                        {
+                            "downwardAPI": {
+                                "items": [
+                                    {
+                                        "fieldRef": {
+                                            "apiVersion": "v1",
+                                            "fieldPath": "metadata.namespace"
+                                        },
+                                        "path": "namespace"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastProbeTime": null,
+                "lastTransitionTime": "2023-02-09T02:22:47Z",
+                "status": "True",
+                "type": "Initialized"
+            },
+            {
+                "lastProbeTime": null,
+                "lastTransitionTime": "2023-02-09T02:22:52Z",
+                "status": "True",
+                "type": "Ready"
+            },
+            {
+                "lastProbeTime": null,
+                "lastTransitionTime": "2023-02-09T02:22:52Z",
+                "status": "True",
+                "type": "ContainersReady"
+            },
+            {
+                "lastProbeTime": null,
+                "lastTransitionTime": "2023-02-09T02:22:47Z",
+                "status": "True",
+                "type": "PodScheduled"
+            }
+        ],
+        "containerStatuses": [
+            {
+                "containerID": "docker://afae093bed80e5c0372b49aec597e6e00a5e4fe93a7325830ce1c8a4244fd08e",
+                "image": "ghcr.io/c1t1d0s7/go-myweb:alpine",
+                "imageID": "docker-pullable://ghcr.io/c1t1d0s7/go-myweb@sha256:925dd88b5abbe7b9c8dbbe97c28d50178da1d357f4f649c6bc10a389fe5a6a55",
+                "lastState": {},
+                "name": "myapp",
+                "ready": true,
+                "restartCount": 0,
+                "started": true,
+                "state": {
+                    "running": {
+                        "startedAt": "2023-02-09T02:22:52Z"
+                    }
+                }
+            }
+        ],
+        "hostIP": "192.168.56.23",
+        "phase": "Running",
+        "podIP": "192.168.119.129",
+        "podIPs": [
+            {
+                "ip": "192.168.119.129"
+            }
+        ],
+        "qosClass": "BestEffort",
+        "startTime": "2023-02-09T02:22:47Z"
+    }
+}

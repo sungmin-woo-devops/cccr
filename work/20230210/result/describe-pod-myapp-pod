@@ -1,0 +1,52 @@
+Name:         myapp-pod
+Namespace:    default
+Priority:     0
+Node:         kube-node3/192.168.56.23
+Start Time:   Thu, 09 Feb 2023 02:22:47 +0000
+Labels:       <none>
+Annotations:  cni.projectcalico.org/containerID: b8d61003c3360d87c5865b923603b68a115b7432af07844541037fc847a6e85f
+              cni.projectcalico.org/podIP: 192.168.119.129/32
+              cni.projectcalico.org/podIPs: 192.168.119.129/32
+Status:       Running
+IP:           192.168.119.129
+IPs:
+  IP:  192.168.119.129
+Containers:
+  myapp:
+    Container ID:   docker://afae093bed80e5c0372b49aec597e6e00a5e4fe93a7325830ce1c8a4244fd08e
+    Image:          ghcr.io/c1t1d0s7/go-myweb:alpine
+    Image ID:       docker-pullable://ghcr.io/c1t1d0s7/go-myweb@sha256:925dd88b5abbe7b9c8dbbe97c28d50178da1d357f4f649c6bc10a389fe5a6a55
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Thu, 09 Feb 2023 02:22:52 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-5cchk (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  kube-api-access-5cchk:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  34m   default-scheduler  Successfully assigned default/myapp-pod to kube-node3
+  Normal  Pulling    34m   kubelet            Pulling image "ghcr.io/c1t1d0s7/go-myweb:alpine"
+  Normal  Pulled     34m   kubelet            Successfully pulled image "ghcr.io/c1t1d0s7/go-myweb:alpine" in 3.175289574s
+  Normal  Created    34m   kubelet            Created container myapp
+  Normal  Started    34m   kubelet            Started container myapp

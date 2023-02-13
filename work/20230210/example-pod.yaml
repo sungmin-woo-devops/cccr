@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: example-pod
+  labels:
+    env: ops
+  annotations:
+    dep/ops: Sungmin Woo
+spec:
+  containers: 
+    - name: example-container
+      image: httpd:2.4
+      ports:
+      - containerPort: 80
+        protocol: TCP

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: example-rc-02
+spec:
+  replicas: 1
+  selector:
+    appname: example-rc-02
+  template:
+    metadata:
+      labels:
+        appname: example-rc-02
+    spec:
+      containers:
+      - name: example-container-02
+        image: httpd:2.4
+        ports:
+        - containerPort: 80
+          protocol: TCP

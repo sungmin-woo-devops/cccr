@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: example-pod-label
+  labels:
+    release: stable
+    environment: production
+    tier: frontend
+    partition: customerA
+    track: daily
+    app: webapp
+spec:
+  containers:
+    - name: example-container
+      image: httpd:2.4
+      ports:
+        - containerPort: 80
+          protocol: TCP
+    

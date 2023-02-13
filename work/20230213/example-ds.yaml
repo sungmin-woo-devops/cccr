@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: example-ds
+spec:
+  selector:
+    matchLabels:
+      app: example-ds
+  template:
+    metadata:
+      labels:
+        app: example-ds
+    spec:
+      containers:
+      - name: example
+        image: httpd:2.4
+        ports:
+          - containerPort: 80
+            protocol: TCP
