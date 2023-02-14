@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: example-rs2
+spec:
+  replicas: 3
+  selector:
+    # utility key의 value가 [HR, storage] 중에 있는지
+    matchExpressions:
+    - key: utility
+      operator: In
+      values:
+        - HR
+        - storage 
+    - key: appsvc
+      operator: NotIn
+      values:
+        - public-web
+  template:
+    metadata:
+      labels:
+        utility: HR
+        appsvc: internal-portal
+    spec:
+      containers:
+        - name: web-testing
+          image: httpd:2.4
+          ports:
+            - containerPort: 80
+              protocol: TCP

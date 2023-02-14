@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: example-rs1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      appsvc: internal-portal
+  template:
+    metadata:
+      labels:
+        appsvc: internal-portal
+        utility: HR
+    spec:
+      containers:
+        - name: web
+          image: httpd:2.4
+          ports:
+            - containerPort: 80
+              protocol: TCP
