@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-svc-np
+spec:
+  type: NodePort
+  selector:
+    app: myapp-rs
+  ports:
+  - port: 80
+    targetPort: 8080
+    nodePort: 31111   #  ,쿠버네티스 외부에서 내부로 접근할 때 사용하는 포트
