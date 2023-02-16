@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: example-pod
+  labels:
+    appname: example-pod
+spec:
+  containers:
+  - name: example-app
+    image: httpd:2.4
+    ports:
+    - name: example-app
+      containerPort: 80
+      protocol: TCP
