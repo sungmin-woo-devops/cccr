@@ -1,0 +1,8 @@
+# 내부에서 파드가 외부의 특정 FQDN에 쉽게 접근하려고 합니다.
+apiVersion: v1 
+kind: Service
+metadata:
+  name: google-extname
+spec:
+  type: ExternalName
+  externalName: www.google.com

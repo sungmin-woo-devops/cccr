@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: myblog
+spec:
+  type: ExternalName
+  # sungmin-woo-devops.github.io/contrails에서 '/contrails' 부분은 처리해주지 못한다.
+  # 왜 그럴까?
+  externalName: sungmin-woo-devops.github.io
