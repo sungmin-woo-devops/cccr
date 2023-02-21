@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod-compress
+spec:
+  containers:
+  - name: nginx-compress
+    image: nginx
+    volumeMounts:
+    - name: nginx-compress-config
+      mountPath: /etc/nginx/conf.d  # 컨테이너 내 마운트 경로 지정 
+    ports:
+    - containerPort: 80
+      protocol: TCP
+  volumes:
+  - name: nginx-compress-config     # 이름 지정 자유
+    configMap:                      # 마운트에 사용할 ConfigMap 이름으로 지정
+      name: nginx-gzip-config
