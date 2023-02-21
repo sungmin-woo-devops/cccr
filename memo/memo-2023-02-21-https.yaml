@@ -1,0 +1,9 @@
+(논지를 흐리긴 함)
+하나의 proxy가 모든 요청 트래픽 부하를 받아낼 수 없다면
+proxy 서버도 증설해서 로드밸런싱이 또 들어가게 되는데 이때는 인증서 관리 문제가 반복되는 것 아닌가요?
+-> 오토스케일링된 Pod들은 완전히 일치하므로 인증서도 모든 파드가 동일한가? 그렇다면 문제 해결
+
+통합해서 처리해줄 수 있는 것 = ingress controller
+
+kubectl craete -f myapp-rs.yaml -f myapp-svc-np.yaml
+

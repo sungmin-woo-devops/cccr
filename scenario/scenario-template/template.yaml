@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: template-pod
+spec:
+  containers:
+    - name: template-container
+      image: ghcr.io/c1t1d0s7/go-myweb:alpine
+      ports:
+      - containerPort: 80
+        protocol: TCP

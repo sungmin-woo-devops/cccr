@@ -1,0 +1,36 @@
+### 7.4 컨피그 맵을 이용한 사용자
+
+컨피그 맵?
+컨피그 맵은 간단한 설정, 변수, 설정 파일의 값을 
+키/값 쌍 형태로 저장하고 사용할 수 있는 저장소
+
+설정 값 제공 방법 2가지
+- 환경 변수
+- 명령의 인수
+- 볼륨으로 제공(설정 파일, 간단한 파일 저장)
+
+#### 7.4.1 컨피그 맵 정의 및 확인
+
+시크릿 생성 명령어 생성 방법
+kubectl create secret <TYPE> <NAME> [OPTIONS]
+
+(1) 일반 시크릿 생성
+kubectl create secret generic <NAME> \
+[--from-file=[key=]source] \
+[--from-literal=key1=value1]
+
+kubectl create secret TYPE --from-listeral=KEY=VALUE
+kubectl create secret TYPE SECRET --from-file=FILE
+kubectl create secret TYPE SECRET --from-file=KEY=FILE
+
+(2) 도커 저장소 인증 정보용 시크릿 생성
+kubectl create secret docker-registry <NAME> \
+--docker-username=user --docker-password=password \
+--docker-email=email [--docker-server=string]
+
+(3) TLS 키/인증서용 시크릿 생성 기법
+
+---
+kubectl create secret generic secret-generic1 \
+--from-literal=secretkey1=secretvalue1
+
