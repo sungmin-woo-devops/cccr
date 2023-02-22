@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod-huge-req
+spec:
+  containers:
+    - image: ghcr.io/c1t1d0s7/go-myweb:alpine
+      name: myapp
+      resources:
+        requests:
+          cpu: 4000m   # CPU 리소스 요청 4000m (밀리코어)
+          memory: 4Gi  # 메모리 요청 4Gi - 워커 노드 한 대가 가진 리소스의 양을 넘어섰음

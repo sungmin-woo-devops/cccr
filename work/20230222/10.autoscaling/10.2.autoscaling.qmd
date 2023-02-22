@@ -1,0 +1,122 @@
+오토스케일링 소개
+
+https://kimjingo.tistory.com/166
+https://kubernetes.io/ko/docs/tasks/run-application/horizontal-pod-autoscale/
+https://sysdig.com/blog/kubernetes-autoscaler/
+https://www.stacksimplify.com/aws-eks/aws-eks-kubernetes-autoscaling/learn-to-master-horizontal-pod-autoscaling-on-aws-eks/
+https://www.researchgate.net/figure/a-Examples-of-YAML-code-for-configuring-HPA-and-Readiness-Probe-in-Kubernetes-b_fig2_343715085
+
+https://www.youtube.com/watch?v=BUAFNfdarBQ
+https://devopscounsel.com/monitoring-kubernetes-cluster-with-prometheus/
+
+
+수평적 파드 오토스케일러는 줄여서 HPA라고 한다.
+
+앞서 레플리케이션 컨트롤러, 레플리카셋, 디플로이먼트 -> '수동'으로 스케일링
+HPA는 이름 그대로 파드를 '자동'으로 스케일링할 수 있다.
+
+레플리케이션 컨트롤러, 레플리카셋, 스테이트풀셋, 디플로이먼트가 관리하는 파드를 자동으로 스케일링
+
+--- 
+전제
+HPA 리소스는 크기를 조정할 수 없는 컨트롤러 리소스에는 적용할 없음
+
+---
+
+HPA 동작 3 단계
+1. 관리되는 모든 파드의 메트릭(CPU, 메모리)을 측정해 가져온다.
+2. 지정한 목표값에 부합하도록 필요한 파드 수 계싼
+3. 파드를 관리하는 컨트롤러의 복제본 조정
+
+---
+
+파드의 메트릭 가져오기
+HPA <-> Metric Server <-> cAdvisor (via Kubelet) <-> Poda
+
+파드의 메트릭은 각 노드에 있는 Kubelet에서 cAdivisor 에이전트를 실행시키고
+CAdvisor 에이전트가 메트릭을 수집해 이를 메트릭 서버에게 전달한다.
+메트릭 서버는 메트릭 API를 통해 HPA 리소스에 해당 메트릭을 전달한다.
+
+---
+
+파드 수 계산
+
+--- 
+
+복제본 수 조정
+
+---
+
+HPA 리소스 정의
+
+
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl create -f myapp-deploy-hpa.yaml
+deployment.apps/myapp-deploy-hpa created
+
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl get deployments
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+myapp-deploy-hpa         3/3     3            3           19s
+nfs-client-provisioner   1/1     1            1           2d3h
+
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS         AGE
+myapp-deploy-hpa-5b86745678-5gpzr         1/1     Running   0                23s
+myapp-deploy-hpa-5b86745678-c2g4l         1/1     Running   0                23s
+myapp-deploy-hpa-5b86745678-cbznt         1/1     Running   0                23s
+myapp-pod-req                             1/1     Running   0                70m
+myapp-rs-5tzdf                            1/1     Running   2 (5h42m ago)    23h
+myapp-rs-jvjsm                            1/1     Running   2 (5h41m ago)    23h
+myapp-rs-ncsq7                            1/1     Running   2 (5h41m ago)    23h
+myapp-sts-0                               1/1     Running   0                166m
+myapp-sts-1                               1/1     Running   0                166m
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   10 (5h38m ago)   2d3h
+
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl create -f myapp-hpa-cpu.yaml
+horizontalpodautoscaler.autoscaling/myapp-hpa-cpu created
+
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl get hpa
+NAME            REFERENCE                     TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+myapp-hpa-cpu   Deployment/myapp-deploy-app   <unknown>/70%   2         10        0          8s
+[vagrant@kube-control1 10.autoscaling]$ kubectl get hpa -o wide
+NAME            REFERENCE                     TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+myapp-hpa-cpu   Deployment/myapp-deploy-app   <unknown>/70%   2         10        0          11s
+
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl describe hpa myapp-hpa
+Name:                                                  myapp-hpa-cpu
+Namespace:                                             default
+Labels:                                                <none>
+Annotations:                                           <none>
+CreationTimestamp:                                     Wed, 22 Feb 2023 08:42:51 +0000
+Reference:                                             Deployment/myapp-deploy-app
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  <unknown> / 70%
+Min replicas:                                          2
+Max replicas:                                          10
+Deployment pods:                                       0 current / 0 desired
+Conditions:
+  Type         Status  Reason          Message
+  ----         ------  ------          -------
+  AbleToScale  False   FailedGetScale  the HPA controller was unable to get the target's current scale: deployments/scale.apps "myapp-deploy-app" not found
+Events:
+  Type     Reason          Age               From                       Message
+  ----     ------          ----              ----                       -------
+  Warning  FailedGetScale  9s (x4 over 54s)  horizontal-pod-autoscaler  deployments/scale.apps "myapp-deploy-app" not found
+
+
+
+
+
+
+
+
+
+
+
+
+

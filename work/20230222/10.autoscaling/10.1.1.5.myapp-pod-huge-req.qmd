@@ -1,0 +1,58 @@
+[vagrant@kube-control1 10.autoscaling]$ vim myapp-pod-huge-req.yaml
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl create -f  myapp-pod-huge-req.yaml
+pod/myapp-pod-huge-req created
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS         AGE
+myapp-pod-huge-req                        0/1     Pending   0                3s
+myapp-pod-req                             1/1     Running   0                11m
+myapp-rs-5tzdf                            1/1     Running   2 (4h43m ago)    22h
+myapp-rs-jvjsm                            1/1     Running   2 (4h42m ago)    22h
+myapp-rs-ncsq7                            1/1     Running   2 (4h42m ago)    22h
+myapp-sts-0                               1/1     Running   0                107m
+myapp-sts-1                               1/1     Running   0                107m
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   10 (4h39m ago)   2d2h
+
+노드가 가진 리소스보다 많은 양의 리소스를 요구하는 Pod를 생성하여 실행하여 보자.
+[vagrant@kube-control1 10.autoscaling]$ kubectl describe pod myapp-pod-huge-req
+Name:         myapp-pod-huge-req
+Namespace:    default
+Priority:     0
+Node:         <none>
+Labels:       <none>
+Annotations:  <none>
+Status:       Pending
+IP:           
+IPs:          <none>
+Containers:
+  myapp:
+    Image:      ghcr.io/c1t1d0s7/go-myweb:alpine
+    Port:       <none>
+    Host Port:  <none>
+    Requests:
+      cpu:        4
+      memory:     4Gi
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-9swrl (ro)
+Conditions:
+  Type           Status
+  PodScheduled   False 
+Volumes:
+  kube-api-access-9swrl:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age                From               Message
+  ----     ------            ----               ----               -------
+  Warning  FailedScheduling  10s (x2 over 96s)  default-scheduler  0/4 nodes are available: 1 node(s) had taint {node-role.kubernetes.io/master: }, that the pod didn't tolerate, 3 Insufficient cpu, 3 Insufficient memory.
+
+불충분한 cpu, 메모리라는 오류가 발생함을 Events 필드를 보고 알 수 있다.

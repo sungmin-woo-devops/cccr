@@ -1,0 +1,181 @@
+[vagrant@kube-control1 statefulset_volume]$ vim myapp-sts-vol.yaml 
+
+
+[vagrant@kube-control1 statefulset_volume]$ kubectl create -f myapp-sts-vol.yaml 
+statefulset.apps/myapp-sts-vol created
+
+
+[vagrant@kube-control1 statefulset_volume]$ k get sts
+NAME            READY   AGE
+myapp-sts       2/2     31m
+myapp-sts-vol   2/2     12s
+
+
+[vagrant@kube-control1 statefulset_volume]$ k describe sts myapp-sts-vol
+Name:               myapp-sts-vol
+Namespace:          default
+CreationTimestamp:  Wed, 22 Feb 2023 06:26:31 +0000
+Selector:           app=myapp-sts-vol
+Labels:             <none>
+Annotations:        <none>
+Replicas:           2 desired | 2 total
+Update Strategy:    RollingUpdate
+  Partition:        0
+Pods Status:        2 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  app=myapp-sts-vol
+  Containers:
+   myapp:
+    Image:        ghcr.io/c1t1d0s7/go-myweb:alpine
+    Port:         8080/TCP
+    Host Port:    0/TCP
+    Environment:  <none>
+    Mounts:
+      /data from myapp-data (rw)
+  Volumes:  <none>
+Volume Claims:
+  Name:          myapp-data
+  StorageClass:  nfs-client
+  Labels:        <none>
+  Annotations:   <none>
+  Capacity:      1Gi
+  Access Modes:  [ReadWriteOnce]
+Events:
+  Type    Reason            Age   From                    Message
+  ----    ------            ----  ----                    -------
+  Normal  SuccessfulCreate  27s   statefulset-controller  create Claim myapp-data-myapp-sts-vol-0 Pod myapp-sts-vol-0 in StatefulSet myapp-sts-vol success
+  Normal  SuccessfulCreate  27s   statefulset-controller  create Pod myapp-sts-vol-0 in StatefulSet myapp-sts-vol successful
+  Normal  SuccessfulCreate  23s   statefulset-controller  create Claim myapp-data-myapp-sts-vol-1 Pod myapp-sts-vol-1 in StatefulSet myapp-sts-vol success
+  Normal  SuccessfulCreate  23s   statefulset-controller  create Pod myapp-sts-vol-1 in StatefulSet myapp-sts-vol successful
+
+
+[vagrant@kube-control1 statefulset_volume]$ k get pv,pvc
+NAME                                                        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                                STORAGECLASS   REASON   AGE
+persistentvolume/pvc-f20922c1-5d60-4628-ad89-d699a30bf6ac   1Gi        RWO            Delete           Bound    default/myapp-data-myapp-sts-vol-0   nfs-client              90s
+persistentvolume/pvc-fe5e6111-cc9d-43ff-a312-c0049413b492   1Gi        RWO            Delete           Bound    default/myapp-data-myapp-sts-vol-1   nfs-client              86s
+
+NAME                                               STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+persistentvolumeclaim/myapp-data-myapp-sts-vol-0   Bound    pvc-f20922c1-5d60-4628-ad89-d699a30bf6ac   1Gi        RWO            nfs-client     90s
+persistentvolumeclaim/myapp-data-myapp-sts-vol-1   Bound    pvc-fe5e6111-cc9d-43ff-a312-c0049413b492   1Gi        RWO            nfs-client     86s
+
+
+
+[vagrant@kube-control1 statefulset_volume]$ kubectl describe pvc myapp-data-myapp-sts-vol-0
+Name:          myapp-data-myapp-sts-vol-0
+Namespace:     default
+StorageClass:  nfs-client
+Status:        Bound
+Volume:        pvc-f20922c1-5d60-4628-ad89-d699a30bf6ac
+Labels:        app=myapp-sts-vol
+Annotations:   pv.kubernetes.io/bind-completed: yes
+               pv.kubernetes.io/bound-by-controller: yes
+               volume.beta.kubernetes.io/storage-provisioner: k8s-sigs.io/nfs-subdir-external-provisioner
+Finalizers:    [kubernetes.io/pvc-protection]
+Capacity:      1Gi
+Access Modes:  RWO
+VolumeMode:    Filesystem
+Used By:       myapp-sts-vol-0
+Events:
+  Type    Reason                 Age                    From                                                                                                                      Message
+  ----    ------                 ----                   ----                                                                                                                      -------
+  Normal  ExternalProvisioning   2m36s (x2 over 2m36s)  persistentvolume-controller                                                                                               waiting for a volume to be created, either by external provisioner "k8s-sigs.io/nfs-subdir-external-provisioner" or manually created by system administrator
+  Normal  Provisioning           2m36s                  k8s-sigs.io/nfs-subdir-external-provisioner_nfs-client-provisioner-7c494c767d-fbmhr_02570574-2df6-4399-ab9a-55975a43e470  External provisioner is provisioning volume for claim "default/myapp-data-myapp-sts-vol-0"
+  Normal  ProvisioningSucceeded  2m36s                  k8s-sigs.io/nfs-subdir-external-provisioner_nfs-client-provisioner-7c494c767d-fbmhr_02570574-2df6-4399-ab9a-55975a43e470  Successfully provisioned volume pvc-f20922c1-5d60-4628-ad89-d699a30bf6ac
+
+
+
+[vagrant@kube-control1 statefulset_volume]$ kubectl describe pvc myapp-data-myapp-sts-vol-0
+Name:          myapp-data-myapp-sts-vol-0
+Namespace:     default
+StorageClass:  nfs-client
+Status:        Bound
+Volume:        pvc-f20922c1-5d60-4628-ad89-d699a30bf6ac
+Labels:        app=myapp-sts-vol
+Annotations:   pv.kubernetes.io/bind-completed: yes
+               pv.kubernetes.io/bound-by-controller: yes
+               volume.beta.kubernetes.io/storage-provisioner: k8s-sigs.io/nfs-subdir-external-provisioner
+Finalizers:    [kubernetes.io/pvc-protection]
+Capacity:      1Gi
+Access Modes:  RWO
+VolumeMode:    Filesystem
+Used By:       myapp-sts-vol-0
+Events:
+  Type    Reason                 Age                    From                                                                                                                      Message
+  ----    ------                 ----                   ----                                                                                                                      -------
+  Normal  ExternalProvisioning   2m36s (x2 over 2m36s)  persistentvolume-controller                                                                                               waiting for a volume to be created, either by external provisioner "k8s-sigs.io/nfs-subdir-external-provisioner" or manually created by system administrator
+  Normal  Provisioning           2m36s                  k8s-sigs.io/nfs-subdir-external-provisioner_nfs-client-provisioner-7c494c767d-fbmhr_02570574-2df6-4399-ab9a-55975a43e470  External provisioner is provisioning volume for claim "default/myapp-data-myapp-sts-vol-0"
+  Normal  ProvisioningSucceeded  2m36s                  k8s-sigs.io/nfs-subdir-external-provisioner_nfs-client-provisioner-7c494c767d-fbmhr_02570574-2df6-4399-ab9a-55975a43e470  Successfully provisioned volume pvc-f20922c1-5d60-4628-ad89-d699a30bf6ac
+[vagrant@kube-control1 statefulset_volume]$ vim statefulset_volume.output 
+[vagrant@kube-control1 statefulset_volume]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS         AGE
+myapp-rs-5tzdf                            1/1     Running   2 (3h29m ago)    21h
+myapp-rs-jvjsm                            1/1     Running   2 (3h29m ago)    21h
+myapp-rs-ncsq7                            1/1     Running   2 (3h28m ago)    21h
+myapp-sts-0                               1/1     Running   0                34m
+myapp-sts-1                               1/1     Running   0                34m
+myapp-sts-vol-0                           1/1     Running   0                3m
+myapp-sts-vol-1                           1/1     Running   0                2m56s
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   10 (3h26m ago)   2d1h
+[vagrant@kube-control1 statefulset_volume]$ kubectl describe pods myapp-sts-vol-0
+Name:         myapp-sts-vol-0
+Namespace:    default
+Priority:     0
+Node:         kube-node3/192.168.56.23
+Start Time:   Wed, 22 Feb 2023 06:26:33 +0000
+Labels:       app=myapp-sts-vol
+              controller-revision-hash=myapp-sts-vol-56d6765c58
+              statefulset.kubernetes.io/pod-name=myapp-sts-vol-0
+Annotations:  cni.projectcalico.org/containerID: fcc32d5880b8c6e0038e655bc0f656c6aa9d0a0ca31350035b1f5429422046d1
+              cni.projectcalico.org/podIP: 192.168.119.172/32
+              cni.projectcalico.org/podIPs: 192.168.119.172/32
+Status:       Running
+IP:           192.168.119.172
+IPs:
+  IP:           192.168.119.172
+Controlled By:  StatefulSet/myapp-sts-vol
+Containers:
+  myapp:
+    Container ID:   docker://7ca3b412c9672c5c0d00f66daaf115453e644eb3e5dad3dd55a71672687de296
+    Image:          ghcr.io/c1t1d0s7/go-myweb:alpine
+    Image ID:       docker-pullable://ghcr.io/c1t1d0s7/go-myweb@sha256:925dd88b5abbe7b9c8dbbe97c28d50178da1d357f4f649c6bc10a389fe5a6a55
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Wed, 22 Feb 2023 06:26:34 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /data from myapp-data (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-glbnx (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  myapp-data:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  myapp-data-myapp-sts-vol-0
+    ReadOnly:   false
+  kube-api-access-glbnx:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age    From               Message
+  ----     ------            ----   ----               -------
+  Warning  FailedScheduling  3m11s  default-scheduler  0/4 nodes are available: 4 pod has unbound immediate PersistentVolumeClaims.
+  Normal   Scheduled         3m9s   default-scheduler  Successfully assigned default/myapp-sts-vol-0 to kube-node3
+  Normal   Pulled            3m8s   kubelet            Container image "ghcr.io/c1t1d0s7/go-myweb:alpine" already present on machine
+  Normal   Created           3m8s   kubelet            Created container myapp
+  Normal   Started           3m8s   kubelet            Started container myapp
+
+

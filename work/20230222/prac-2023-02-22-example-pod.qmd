@@ -1,0 +1,121 @@
+[vagrant@kube-control1 20230222]$ k create -f example-deploy.yaml 
+deployment.apps/myapp-deploy created
+
+[vagrant@kube-control1 20230222]$ k get deployments
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+myapp-deploy             0/3     3            0           7s
+nfs-client-provisioner   1/1     1            1           43h
+
+디플로이먼트는 레플리카셋의 기능을 모두 포함하고 있다(디플로이먼트 = 레플리카셋 + 배포 전략)
+[vagrant@kube-control1 20230222]$ kubectl get replicasets
+NAME                                DESIRED   CURRENT   READY   AGE
+myapp-deploy-d5945d6b4              3         3         3       65s
+myapp-rs                            3         3         3       16h
+nfs-client-provisioner-7c494c767d   1         1         1       43h
+
+디플로이먼트로 생성된 파드 목록 확인
+[vagrant@kube-control1 20230222]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS      AGE
+myapp-deploy-d5945d6b4-86qkq              1/1     Running   0             69s
+myapp-deploy-d5945d6b4-c2bkg              1/1     Running   0             69s
+myapp-deploy-d5945d6b4-gzg6v              1/1     Running   0             69s
+myapp-rs-5tzdf                            1/1     Running   1 (17m ago)   16h
+myapp-rs-jvjsm                            1/1     Running   1 (15h ago)   16h
+myapp-rs-ncsq7                            1/1     Running   1 (15h ago)   16h
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   6 (15m ago)   43h
+
+디플로이먼트 상세 정보 확인
+[vagrant@kube-control1 20230222]$ kubectl describe deployments myapp-deploy
+Name:                   myapp-deploy
+Namespace:              default
+CreationTimestamp:      Wed, 22 Feb 2023 00:54:59 +0000
+*Labels:                 app=myapp-deploy
+Annotations:            deployment.kubernetes.io/revision: 1
+*Selector:               app=myapp-deploy
+*Replicas:               3 desired | 3 updated | 3 total | 3 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+*RollingUpdateStrategy:  25% max unavailable, 25% max surge
+*Pod Template:
+  Labels:  app=myapp-deploy
+  Containers:
+   myapp:
+    Image:        k8s.gcr.io/echoserver:1.10
+    Port:         8080/TCP
+    Host Port:    0/TCP
+    Environment:  <none>
+    Mounts:       <none>
+  Volumes:        <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   myapp-deploy-d5945d6b4 (3/3 replicas created)
+Events:
+  Type    Reason             Age   From                   Message
+  ----    ------             ----  ----                   -------
+  Normal  ScalingReplicaSet  5m7s  deployment-controller  Scaled up replica set myapp-deploy-d5945d6b4 to 3
+
+
+디플로이먼트로 생성된 레플리카셋 상세 정보 확인
+[vagrant@kube-control1 20230222]$ kubectl describe replicasets myapp-deploy-d5945d6b4 
+Name:           myapp-deploy-d5945d6b4
+Namespace:      default
+*Selector:       app=myapp-deploy,pod-template-hash=d5945d6b4
+*Labels:         app=myapp-deploy
+                pod-template-hash=d5945d6b4
+Annotations:    deployment.kubernetes.io/desired-replicas: 3
+                deployment.kubernetes.io/max-replicas: 4
+                deployment.kubernetes.io/revision: 1
+Controlled By:  Deployment/myapp-deploy
+*Replicas:       3 current / 3 desired
+Pods Status:    3 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+*  Labels:  app=myapp-deploy
+           pod-template-hash=d5945d6b4
+  Containers:
+   myapp:
+    Image:        k8s.gcr.io/echoserver:1.10
+    Port:         8080/TCP
+    Host Port:    0/TCP
+    Environment:  <none>
+    Mounts:       <none>
+  Volumes:        <none>
+Events:
+  Type    Reason            Age    From                   Message
+  ----    ------            ----   ----                   -------
+  Normal  SuccessfulCreate  8m55s  replicaset-controller  Created pod: myapp-deploy-d5945d6b4-86qkq
+  Normal  SuccessfulCreate  8m55s  replicaset-controller  Created pod: myapp-deploy-d5945d6b4-gzg6v
+  Normal  SuccessfulCreate  8m55s  replicaset-controller  Created pod: myapp-deploy-d5945d6b4-c2bkg
+
+
+디플로이먼트 파드 오토스케일링
+[vagrant@kube-control1 20230222]$ kubectl scale deployments myapp-deploy --replicas=3
+deployment.apps/myapp-deploy scaled
+
+디플로이먼트로 제어되는 파드의 수가 2개에서 3개로 오토스케일링됨을 확인
+[vagrant@kube-control1 20230222]$ kubectl get deployments
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+myapp-deploy             3/3     3            3           11m
+nfs-client-provisioner   1/1     1            1           43h
+
+[vagrant@kube-control1 20230222]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS      AGE
+myapp-deploy-d5945d6b4-86qkq              1/1     Running   0             13m
+myapp-deploy-d5945d6b4-c2bkg              1/1     Running   0             13m
+myapp-deploy-d5945d6b4-gzg6v              1/1     Running   0             13m
+myapp-rs-5tzdf                            1/1     Running   1 (29m ago)   16h
+myapp-rs-jvjsm                            1/1     Running   1 (15h ago)   16h
+myapp-rs-ncsq7                            1/1     Running   1 (15h ago)   16h
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   6 (27m ago)   43h
+
+디플로이먼트 삭제
+[vagrant@kube-control1 20230222]$ kubectl delete deployments myapp-deploy
+deployment.apps "myapp-deploy" deleted
+
+
+---
+결론
+디플로이먼트 리소스는 하위에 레플리카셋 컨트롤러를 제어한다.

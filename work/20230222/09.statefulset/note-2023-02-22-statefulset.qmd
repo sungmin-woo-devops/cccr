@@ -1,0 +1,288 @@
+스테이트풀셋 소개
+
+상태가 있는 애플리케이션을 운영할 수 있는 컨트롤러
+
+##### 기존 컨트롤러의 문제점
+기존 컨트롤러? 레플리케이션 컨트롤러, 레플리카셋, 디플로이먼트
+
+
+Q. 파드에서 생성된 데이터를 영구 저장해야 하는 경우? 
+A. PV로 재공된 볼륨에 저장
+
+애플리케이션이 개별적인 상테(state)를 가지고 계속해서 변화를 가지게 된다면?
+ex) 데이터베이스 서버
+
+똑같은 버전의 MariaDB로 구축된 데이터베이스 파드가 있을 때
+각각 master, slave 역할이 다르다면 state가 다르다고 볼 수 있다.
+
+database에 data를 저장한다고 가정해보자.
+
+data를 볼륨으로부터 read하는 것은 문제가 되지 않겠지만
+data를 볼륨에 write하는 작업을 수행할 경우
+query를 실행하게 되고, 이는 transaction이란 것으로 처리가 됩니다.
+
+여러 파드가 볼륨에 대한 write를 진행하게 된다면 충돌이 발생할 수 있다.
+따라서 각각의 파드는 자신들의 상태를 보존하기 위해서 각각 독립된 저장소에 상태를 저장할 필요가 있다.
+
+이렇게 서로 다른 상태를 갖는 파드들을 운영하는 경우
+보통은 개별 파드로 실행하지 않고, 컨트롤러를 통해 실행하여 정상적인 운영을 보장받을 수 있게 한다.
+(각각 독립된 컨트롤러로 관리)
+
+---
+
+9.1.2.1 가축과 반려동물
+
+스테이트풀셋은 문제가 생긴 파드와 완벽하게 똑같은 파드로 대체한다.
+즉, 똑같은 이름과 똑같은 IP르 ㄹ가진 파드로 교체
+
+---
+
+9.1.2.2 스테이트풀셋이란?
+
+스테이트풀셋은 컨테이너 애플리케이션의 상태를 관리하는데 사용하는 컨트롤러이다.
+
+스테이트풀셋의 기능
+- 파드 베포
+- 파드 복제본 제공
+- 스케일링
+- 파드의 순서
+- 파드의 고유성(이름, 네트워크, 스토리지)
+- 각 파드의 고유한 볼륨
+
+왜 써야 되는데?
+파드로  특정 상태를 가지는 특수한 애플리케이션을 서비스하는 경우
+이 특성을 고려하여 파드들을 제어하기 위해 사용하는 컨트롤러이다.
+
+상태(state)가 뭔가요?
+시간의 흐름에 따라 변화하는 데이터들의 순간순간을 상태라고 한다.
+
+---
+
+9.1.2.3
+스테이트풀셋의 주의사항
+1. 파드에 사용할 스토리지는 PVC를 통해서만 가능
+  - 미리 PV 생성
+  - StorageClass 사용해 동적 프로비저닝 사용
+2. 스테이트풀셋을 삭제하거나 파드를 삭제하더라도 볼륨은 삭제되지 않음
+  - 데이터의 안전을 보장
+3. 헤드리스 서비스 필요
+  - 파드의 고유한 네트워크 신원 제공하기 위함
+
+---
+
+9.1.2.4 스테이트풀셋의 파드 이름
+스테이트풀셋의 각 파드 이름은 컨트롤러의 이름에 0부터 시작하는 순서 색인이 붙게 된다.
+{StatefulSet-Name}-{Order}
+mysts-0
+mysts-1
+
+---
+
+9.1.2.5 스테이트풀셋의 파드 DNS 주소
+
+헤드리스 서비스와 스테이트풀셋을 같이 사용하는 경우 파드의 DNS 주소는 다음과 같다.
+
+파드 DNS 주소 형식
+{Pod_Name}.{Governing_Service_Domain}.{Namespace}.svc.cluster.local
+
+파드 DNS 주소 예
+mysts-0.mysts.default.svc.cluster.local
+mysts-1.mysts.dafault.svc.cluster.local
+
+---
+
+9.1.2.6 스테이트풀셋의 스토리지 볼륨
+스테이트풀셋의 파드는 각각 고유한 PVC를 생성해 고유한 PV를 가짐
+statuefulset.spec.volumeClaimTemplates 필드에 선언하며, 미리 PV를 준비하거나,
+StorageClass를 통해 PV를 생성할 수 있다.
+
+---
+
+9.1.2.7 스테이트풀셋의 스케일링
+- 3개의 복제본이 있는 스테이트풀셋 파드는 0 -> 1 -> 2 순서대로 생성됨
+- 파드를 스케일 아웃하기 전 기존 파드는 Running 및 Ready 상태여야 함
+- 파드가 스케일 인에 의해 삭제될 때는 역순으로 삭제됨
+
+------ 
+
+스테이트풀셋이란 애플리케이션의 상태를 저장하고 관리하는 데 사용되는 쿠버네티스 객체이다.
+
+기존의 컨트롤러에서는 파드가 삭제 후 재생성될 때 이전 파드와 다른 완전히 새로운 파드를 실행한다.
+이렇게 제공된 새로운 파드는 이전 파드와는 다른 새로운 컨테이너 환경을 제공한다.
+
+하지만 애플리케이션 특성상(ex. 데이터베이스, ...) 필요에 따라 기존의 파드의 상태를 유지하고 싶을 수 있다.
+예를 들어 데이터베이스나 응용프로그램의 로그와 같은 정보들을 저장하는 서비스의 경우 
+단순히 PV를 하나 마운트해 이를 유지하기는 어렵다.
+
+
+Stateful한 애플리케이션들을 어떻게 Pod로 제공하고 이를 관리할 수 있을까? 에 대한 답변으로 
+탄생한 컨트롤러가 바로 스테이트풀셋이다.
+
+
+스테이트풀셋으로 생성되는 파드는 영구 식별자를 가지고 상태를 유지시킬 수 있다.
+
+파드이ㅡ 고유한 네트워크 신원을 제공하기 위해서 헤드리스 서비스가 필요하다.
+
+
+
+
+
+
+https://may9noy.tistory.com/257
+
+
+
+---
+
+스테이트풀셋 생성
+[vagrant@kube-control1 statefulset]$ kubectl create -f myapp-svc-headless.yaml -f myapp-sts.yaml
+service/myapp-svc-headless created
+statefulset.apps/myapp-sts created
+
+생성된 스테이트풀셋 확인
+[vagrant@kube-control1 statefulset]$ kubectl get sts
+NAME        READY   AGE
+myapp-sts   2/2     16s
+
+
+[vagrant@kube-control1 statefulset]$ kubectl get po
+NAME                                      READY   STATUS    RESTARTS        AGE
+myapp-rs-5tzdf                            1/1     Running   2 (175m ago)    21h
+myapp-rs-jvjsm                            1/1     Running   2 (175m ago)    21h
+myapp-rs-ncsq7                            1/1     Running   2 (174m ago)    21h
+myapp-sts-0                               1/1     Running   0               18s
+myapp-sts-1                               1/1     Running   0               17s
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   10 (172m ago)   2d
+
+
+[vagrant@kube-control1 statefulset]$ kubectl describe sts myapp-sts
+Name:               myapp-sts
+Namespace:          default
+CreationTimestamp:  Wed, 22 Feb 2023 05:55:08 +0000
+Selector:           app=myapp-sts
+Labels:             <none>
+Annotations:        <none>
+Replicas:           2 desired | 2 total
+Update Strategy:    RollingUpdate
+  Partition:        0
+Pods Status:        2 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  app=myapp-sts
+  Containers:
+   myapp:
+    Image:        ghcr.io/c1t1d0s7/go-myweb:alpine
+    Port:         8080/TCP
+    Host Port:    0/TCP
+    Environment:  <none>
+    Mounts:       <none>
+  Volumes:        <none>
+Volume Claims:    <none>
+Events:
+  Type    Reason            Age   From                    Message
+  ----    ------            ----  ----                    -------
+  Normal  SuccessfulCreate  84s   statefulset-controller  create Pod myapp-sts-0 in StatefulSet myapp-sts successful
+  Normal  SuccessfulCreate  83s   statefulset-controller  create Pod myapp-sts-1 in StatefulSet myapp-sts successful
+
+
+[vagrant@kube-control1 statefulset]$ kubectl scale statefulsets myapp-sts --replicas=3 
+statefulset.apps/myapp-sts scaled
+
+
+[vagrant@kube-control1 statefulset]$ kubectl get statefulsets
+NAME        READY   AGE
+myapp-sts   3/3     2m51s
+
+
+[vagrant@kube-control1 statefulset]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS        AGE
+myapp-rs-5tzdf                            1/1     Running   2 (178m ago)    21h
+myapp-rs-jvjsm                            1/1     Running   2 (177m ago)    21h
+myapp-rs-ncsq7                            1/1     Running   2 (177m ago)    21h
+myapp-sts-0                               1/1     Running   0               2m55s
+myapp-sts-1                               1/1     Running   0               2m54s
+myapp-sts-2                               1/1     Running   0               13s
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   10 (174m ago)   2d
+
+
+[vagrant@kube-control1 statefulset]$ kubectl get statefulsets
+NAME        READY   AGE
+myapp-sts   3/3     2m51s
+[vagrant@kube-control1 statefulset]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS        AGE
+myapp-rs-5tzdf                            1/1     Running   2 (178m ago)    21h
+myapp-rs-jvjsm                            1/1     Running   2 (177m ago)    21h
+myapp-rs-ncsq7                            1/1     Running   2 (177m ago)    21h
+myapp-sts-0                               1/1     Running   0               2m55s
+myapp-sts-1                               1/1     Running   0               2m54s
+myapp-sts-2                               1/1     Running   0               13s
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   10 (174m ago)   2d
+[vagrant@kube-control1 statefulset]$ kubectl scale statefulsets myapp-sts --replicas=2
+statefulset.apps/myapp-sts scaled
+[vagrant@kube-control1 statefulset]$ kubectl get statefulsets
+NAME        READY   AGE
+myapp-sts   2/2     3m31s
+[vagrant@kube-control1 statefulset]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS        AGE
+myapp-rs-5tzdf                            1/1     Running   2 (178m ago)    21h
+myapp-rs-jvjsm                            1/1     Running   2 (178m ago)    21h
+myapp-rs-ncsq7                            1/1     Running   2 (177m ago)    21h
+myapp-sts-0                               1/1     Running   0               3m33s
+myapp-sts-1                               1/1     Running   0               3m32s
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   10 (175m ago)   2d
+
+
+[vagrant@kube-control1 statefulset]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS        AGE
+myapp-rs-5tzdf                            1/1     Running   2 (179m ago)    21h
+myapp-rs-jvjsm                            1/1     Running   2 (178m ago)    21h
+myapp-rs-ncsq7                            1/1     Running   2 (178m ago)    21h
+myapp-sts-0                               1/1     Running   0               4m
+myapp-sts-1                               1/1     Running   0               3m59s
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   10 (175m ago)   2d
+
+
+[vagrant@kube-control1 statefulset]$ kubectl run nettool -it --image=ghcr.io/c1t1d0s7/network-multitool --rm -- /bin/bash
+
+bash-5.1# host myapp-svc-headless
+myapp-svc-headless.default.svc.cluster.local has address 192.168.9.97
+myapp-svc-headless.default.svc.cluster.local has address 192.168.233.246
+
+bash-5.1# host myapp-svc-headless.default.svc.cluster.local
+myapp-svc-headless.default.svc.cluster.local has address 192.168.233.246
+myapp-svc-headless.default.svc.cluster.local has address 192.168.9.97
+
+
+FQDN으로 개별 파드 접속
+myapp-sts-0.myapp-svc-headless.default.svc.cluster.local has address 192.168.233.246
+bash-5.1# host myapp-sts-1.myapp-svc-headless.default.svc.cluster.local
+myapp-sts-1.myapp-svc-headless.default.svc.cluster.local has address 192.168.9.97
+
+
+HTTP 요청으로 스테이트풀셋으로 동작하는 개별 파드들에 접근
+bash-5.1# curl http://myapp-sts-0.myapp-svc-headless.default.svc.cluster.local:8080
+Hello World!
+myapp-sts-0
+bash-5.1# curl http://myapp-sts-1.myapp-svc-headless.default.svc.cluster.local:8080
+Hello World!
+myapp-sts-1
+
+
+스테이트풀한 서비스들의 종류와 이에 따른 상태는 뭐가 있을까?
+ex) 통장(서비스)의 잔액(상태)
+ec) 챗봇(서비스)에 대화주제 요청 시 이전 얘기를 이어서 하는 경우(상태)
+
+과거의 데이터를 바탕으로 새로운 데이터를 처리하는 것이 스테이트풀한 앱이다.
+
+
+
+
+
+---
+
+PVC를 지우면 PV도 같이 지워진다.
+
+---
+상태란?
+https://johngrib.github.io/wiki/pattern/state/
+https://github.com/sungsu9022/study-kubernetes-in-action/issues/10
+

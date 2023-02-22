@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: myapp-sts
+spec:
+  selector:
+    matchLabels:
+      app: myapp-sts
+  serviceName: myapp-svc-headless
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: myapp-sts
+    spec:
+      containers:
+        - name: myapp
+          image: ghcr.io/c1t1d0s7/go-myweb:alpine
+          ports:
+            - containerPort: 8080
+
+# 스테이트풀셋으로 구성할 필요는 없는 서비스
+# 볼륨 연결 X 예제

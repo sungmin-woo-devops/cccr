@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-svc-headless
+  labels:
+    app: myapp-svc-headless
+spec:
+  type: ClusterIP       # headless service도 svc 타입은 ClusterIP이다.
+  ports:
+  - name: http
+    port: 8080            # pod로 접근하기 위해 사용할 svc측 포트
+  clusterIP: None       # svc 오브젝트의 ClusterIP 정의하는 필드(kube-proxy에서 DHCP로 IP 할당받음)
+                        # headless service이기에 ClusterIP가 없어 None의 값을 가짐
+  selector:
+    app: myapp-sts

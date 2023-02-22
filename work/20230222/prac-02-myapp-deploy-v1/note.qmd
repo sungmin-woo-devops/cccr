@@ -1,0 +1,128 @@
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl create -f myapp-deploy-v1.yaml --record
+Flag --record has been deprecated, --record will be removed in the future
+deployment.apps/myapp-deploy created
+
+디플로이먼트 및 레플리카셋, 파드 생성 확인
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl get deployments
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+myapp-deploy             3/3     3            3           46s
+nfs-client-provisioner   1/1     1            1           44h
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl get replicasets
+NAME                                DESIRED   CURRENT   READY   AGE
+myapp-deploy-66c777f866             3         3         3       50s
+myapp-rs                            3         3         3       17h
+nfs-client-provisioner-7c494c767d   1         1         1       44h
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS       AGE
+myapp-deploy-66c777f866-pm87j             1/1     Running   0              54s
+myapp-deploy-66c777f866-qsc79             1/1     Running   0              54s
+myapp-deploy-66c777f866-zd49b             1/1     Running   0              54s
+myapp-rs-5tzdf                            1/1     Running   1 (102m ago)   17h
+myapp-rs-jvjsm                            1/1     Running   1 (16h ago)    17h
+myapp-rs-ncsq7                            1/1     Running   1 (16h ago)    17h
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   6 (100m ago)   44h
+
+
+디플로이먼트를 연결한 LB 타입 서비스 오브젝트 생성
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl create -f myapp-svc-deploy.yaml 
+service/myapp-svc-deploy created
+
+
+생성한 LB 타입 서비스 오브젝트의 External IP 확인
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl get services
+NAME               TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)        AGE
+kubernetes         ClusterIP      10.96.0.1       <none>           443/TCP        13d
+*myapp-svc-deploy   LoadBalancer   10.101.63.17   *192.168.56.202   80:31468/TCP   2m35s
+myapp-svc-nfs      LoadBalancer   10.100.82.178   192.168.56.200   80:30780/TCP   47h
+myapp-svc-np       NodePort       10.100.39.241   <none>           80:31111/TCP   17h
+
+
+새 터미널 1 생성
+watch -n1 -d kubectl get all
+새 터미널 2 생성
+wacth -n1 -d curl http://192.168.56.202 <- LB ExternalIP
+
+
+롤아웃 상태 확인
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl rollout status deployment myapp-deploy
+deployment "myapp-deploy" successfully rolled out
+
+
+롤아웃 히스토리 확인: 버전 변경에 영향을 준 명령어들에 대한 히스토리 조회
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl rollout history deployment myapp-deploy
+deployment.apps/myapp-deploy 
+REVISION  CHANGE-CAUSE
+1         kubectl create --filename=myapp-deploy-v1.yaml --record=true
+개정번호  버전이 변경된 이유에 해당하는 명령어
+
+신규 버전 서비스 시 문제가 발생하여 이전 버전으로 다시 돌아가 서비스를 재개할 때 롤아웃 히스토리를 사용한다.
+
+---
+
+컨테이너 이미지 교체하는 방법 2가지
+1. kubectl set image dpeloyment <디플로이먼트 이름> <컨테이너 이름>=<새 이미지>
+  어떤 컨테이너의 이미지를 어떤 버전으로 변경할 것인가 지정
+2. kubectl set image -f <디플로이먼트파일> <컨테이너이름>=<새 이미지>
+
+
+첫 번째 방식으로 myapp 컨테이너 이미지 버전1 -> 버전2로 업데이트
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl set image deployments myapp-deploy myapp=ghcr.io/c1t1d0s7/go-myweb:v2.0
+deployment.apps/myapp-deploy image updated
+
+
+디플로이먼트의 롤아웃 상태 확인
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl rollout status deployment myapp-deploy
+Waiting for deployment "myapp-deploy" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "myapp-deploy" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "myapp-deploy" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "myapp-deploy" rollout to finish: 2 of 3 updated replicas are available...
+Waiting for deployment "myapp-deploy" rollout to finish: 2 of 3 updated replicas are available...
+deployment "myapp-deploy" successfully rolled out
+
+
+디플로이먼트의 롤아웃 히스토리 확인
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl rollout history deployment myapp-deploy
+deployment.apps/myapp-deploy 
+REVISION  CHANGE-CAUSE
+1         kubectl create --filename=myapp-deploy-v1.yaml --record=true
+2         kubectl create --filename=myapp-deploy-v1.yaml --record=true
+
+(watch 명령어 결과는 첨부한 이미지 참고)
+
+
+v2.0 -> v3.0 업데이트
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl set image deploymenys myapp-deploy myapp=ghcr.io/c1t1d0s7/go-myweb:3.0 --record
+Flag --record has been deprecated, --record will be removed in the future
+error: the server doesn't have a resource type "deploymenys"
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl set image deployments myapp-deploy myapp=ghcr.io/c1t1d0s7/go-myweb:3.0 --record
+Flag --record has been deprecated, --record will be removed in the future
+deployment.apps/myapp-deploy image updated
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl rollout history deployment myapp-deploy
+deployment.apps/myapp-deploy 
+REVISION  CHANGE-CAUSE
+1         kubectl create --filename=myapp-deploy-v1.yaml --record=true
+2         kubectl create --filename=myapp-deploy-v1.yaml --record=true
+3         kubectl set image deployments myapp-deploy myapp=ghcr.io/c1t1d0s7/go-myweb:3.0 --record=true
+
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl rollout status deployment myapp-deploy
+Waiting for deployment "myapp-deploy" rollout to finish: 2 out of 3 new replicas have been updated...
+
+에러 발생한다. (이미지 참고)
+
+---
+버전 v3.0 배포시 에러가 발생하므로 이전 버전인 v2.0로 롤백하여 보자.
+
+
+버전 v2.0 -> v3.0으로 롤백
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl rollout undo deployment myapp-deploy --to-revision=2
+deployment.apps/myapp-deploy rolled back
+
+해당 작업 또한 --record 옵션을 붙이지 않았기 때문에 변경 사유가 CHANGE-CAUSE에 적히지 않은 것을 확인할 수 있다.
+[vagrant@kube-control1 prac-02-myapp-deploy-v1]$ kubectl rollout history deployment myapp-deploy
+deployment.apps/myapp-deploy 
+REVISION  CHANGE-CAUSE
+1         kubectl create --filename=myapp-deploy-v1.yaml --record=true
+3         kubectl set image deployments myapp-deploy myapp=ghcr.io/c1t1d0s7/go-myweb:3.0 --record=true
+4         kubectl create --filename=myapp-deploy-v1.yaml --record=true
+
+

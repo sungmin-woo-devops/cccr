@@ -1,0 +1,92 @@
+[vagrant@kube-control1 statefulset_volume]$ kubectl scale statefulsets myapp-sts-vol --replicas=3
+statefulset.apps/myapp-sts-vol scaled
+[vagrant@kube-control1 statefulset_volume]$ kubectl get statefulsets
+NAME            READY   AGE
+myapp-sts       2/2     36m
+myapp-sts-vol   3/3     5m30s
+[vagrant@kube-control1 statefulset_volume]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS         AGE
+myapp-rs-5tzdf                            1/1     Running   2 (3h32m ago)    21h
+myapp-rs-jvjsm                            1/1     Running   2 (3h31m ago)    21h
+myapp-rs-ncsq7                            1/1     Running   2 (3h31m ago)    21h
+myapp-sts-0                               1/1     Running   0                37m
+myapp-sts-1                               1/1     Running   0                37m
+myapp-sts-vol-0                           1/1     Running   0                5m39s
+myapp-sts-vol-1                           1/1     Running   0                5m35s
+myapp-sts-vol-2                           1/1     Running   0                16s
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   10 (3h28m ago)   2d1h
+[vagrant@kube-control1 statefulset_volume]$ kubectl describe pod myapp-sts-vol-2
+Name:         myapp-sts-vol-2
+Namespace:    default
+Priority:     0
+Node:         kube-node2/192.168.56.22
+Start Time:   Wed, 22 Feb 2023 06:31:55 +0000
+Labels:       app=myapp-sts-vol
+              controller-revision-hash=myapp-sts-vol-56d6765c58
+              statefulset.kubernetes.io/pod-name=myapp-sts-vol-2
+Annotations:  cni.projectcalico.org/containerID: 1fded1ea6993684aa23871b14250d0f609f3e8cd477aff12c0bdead5e02bd6d6
+              cni.projectcalico.org/podIP: 192.168.233.247/32
+              cni.projectcalico.org/podIPs: 192.168.233.247/32
+Status:       Running
+IP:           192.168.233.247
+IPs:
+  IP:           192.168.233.247
+Controlled By:  StatefulSet/myapp-sts-vol
+Containers:
+  myapp:
+    Container ID:   docker://2b4789617cc6b53d49d04195c4301f506a4a58bacff271cc06e57ea816c842a2
+    Image:          ghcr.io/c1t1d0s7/go-myweb:alpine
+    Image ID:       docker-pullable://ghcr.io/c1t1d0s7/go-myweb@sha256:925dd88b5abbe7b9c8dbbe97c28d50178da1d357f4f649c6bc10a389fe5a6a55
+    Port:           8080/TCP
+    Host Port:      0/TCP
+    State:          Running
+      Started:      Wed, 22 Feb 2023 06:31:56 +0000
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /data from myapp-data (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-td752 (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  myapp-data:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  myapp-data-myapp-sts-vol-2
+    ReadOnly:   false
+  kube-api-access-td752:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age   From               Message
+  ----     ------            ----  ----               -------
+  Warning  FailedScheduling  30s   default-scheduler  0/4 nodes are available: 4 pod has unbound immediate PersistentVolumeClaims.
+  Normal   Scheduled         29s   default-scheduler  Successfully assigned default/myapp-sts-vol-2 to kube-node2
+  Normal   Pulled            28s   kubelet            Container image "ghcr.io/c1t1d0s7/go-myweb:alpine" already present on machine
+  Normal   Created           28s   kubelet            Created container myapp
+  Normal   Started           28s   kubelet            Started container myapp
+
+
+PV, PVC 확인
+[vagrant@kube-control1 statefulset_volume]$ kubectl get pv,pvc
+NAME                                                        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                                STORAGECLASS   REASON   AGE
+persistentvolume/pvc-66259b91-4497-4075-bb2c-ec554ddc1683   1Gi        RWO            Delete           Bound    default/myapp-data-myapp-sts-vol-2   nfs-client              83s
+persistentvolume/pvc-f20922c1-5d60-4628-ad89-d699a30bf6ac   1Gi        RWO            Delete           Bound    default/myapp-data-myapp-sts-vol-0   nfs-client              6m46s
+persistentvolume/pvc-fe5e6111-cc9d-43ff-a312-c0049413b492   1Gi        RWO            Delete           Bound    default/myapp-data-myapp-sts-vol-1   nfs-client              6m42s
+
+NAME                                               STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+persistentvolumeclaim/myapp-data-myapp-sts-vol-0   Bound    pvc-f20922c1-5d60-4628-ad89-d699a30bf6ac   1Gi        RWO            nfs-client     6m46s
+persistentvolumeclaim/myapp-data-myapp-sts-vol-1   Bound    pvc-fe5e6111-cc9d-43ff-a312-c0049413b492   1Gi        RWO            nfs-client     6m42s
+persistentvolumeclaim/myapp-data-myapp-sts-vol-2   Bound    pvc-66259b91-4497-4075-bb2c-ec554ddc1683   1Gi        RWO            nfs-client     83s
+

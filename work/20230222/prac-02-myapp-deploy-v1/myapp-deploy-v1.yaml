@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deploy
+  labels:
+    app: myapp-deploy
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1   # 한번에 하나씩 롤링 업데이트를 진행
+      maxSurge: 1         # 어떤 시점에 4개의 파드가 존재 가능하다.
+  minReadySeconds: 20     # 새 파드 생성 시 기존 파드가 20초간 유지된 후 제거된다(기본값:0초)
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp-deploy
+  template:
+    metadata:
+      labels:
+        app: myapp-deploy
+    spec:
+      containers:
+        - name: myapp
+          image: ghcr.io/c1t1d0s7/go-myweb:v1.0
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+
+# Reference
+# https://velog.io/@pinion7/Kubernetes-%EB%A6%AC%EC%86%8C%EC%8A%A4-Deployment%EC%97%90-%EB%8C%80%ED%95%B4-%EC%9D%B4%ED%95%B4%ED%95%98%EA%B3%A0-%EC%8B%A4%EC%8A%B5%ED%95%B4%EB%B3%B4%EA%B8%B0

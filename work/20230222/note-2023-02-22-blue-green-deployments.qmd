@@ -1,0 +1,7 @@
+### DevOps: Blue-Green 배포, A/B Testing 그리고 Canary Releases
+https://jason-lim.tistory.com/3
+
+##### Blue-Green Deployments
+https://jason-lim.tistory.com/3
+
+

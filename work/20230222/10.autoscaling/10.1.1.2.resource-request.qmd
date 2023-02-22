@@ -1,0 +1,168 @@
+쿠버네티스 스케줄러는 파드를 배포하기 전 요청사항만큼 수용할 수 있는 '노드'를 찾아서 해당 노드에 파드를 생성하게 된다.
+
+만약 요청 사항만큼을 실행할 수 있는 노드가 없다면 당연히 파드는 실행될 수 없다.
+
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl create -f myapp-pod-req.yaml 
+pod/myapp-pod-req created
+
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS         AGE
+myapp-pod-req                             1/1     Running   0                3s
+myapp-rs-5tzdf                            1/1     Running   2 (4h32m ago)    22h
+myapp-rs-jvjsm                            1/1     Running   2 (4h31m ago)    22h
+myapp-rs-ncsq7                            1/1     Running   2 (4h31m ago)    22h
+myapp-sts-0                               1/1     Running   0                96m
+myapp-sts-1                               1/1     Running   0                96m
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   10 (4h28m ago)   2d2h
+
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl describe pod myapp-pod-req
+Name:         myapp-pod-req
+Namespace:    default
+Priority:     0
+Node:         kube-node3/192.168.56.23
+Start Time:   Wed, 22 Feb 2023 07:31:52 +0000
+Labels:       <none>
+Annotations:  cni.projectcalico.org/containerID: c614c4187b0e04d73f2d7557734ee579bf0747c4fd91403d7f16394f1d42ece9
+              cni.projectcalico.org/podIP: 192.168.119.174/32
+              cni.projectcalico.org/podIPs: 192.168.119.174/32
+Status:       Running
+IP:           192.168.119.174
+IPs:
+  IP:  192.168.119.174
+Containers:
+  myapp:
+    Container ID:   docker://a7c03faaeaa830b809734d1d51e1e2ad02cb61455bb65fa27713110c8758c900
+    Image:          ghcr.io/c1t1d0s7/go-myweb:alpine
+    Image ID:       docker-pullable://ghcr.io/c1t1d0s7/go-myweb@sha256:925dd88b5abbe7b9c8dbbe97c28d50178da1d357f4f649c6bc10a389fe5a6a55
+    Port:           <none>
+    Host Port:      <none>
+    State:          Running
+      Started:      Wed, 22 Feb 2023 07:31:53 +0000
+    Ready:          True
+    Restart Count:  0
+    Requests:
+      cpu:        200m
+      memory:     10Mi
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-s4n29 (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  kube-api-access-s4n29:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  43s   default-scheduler  Successfully assigned default/myapp-pod-req to kube-node3
+  Normal  Pulled     42s   kubelet            Container image "ghcr.io/c1t1d0s7/go-myweb:alpine" already present on machine
+  Normal  Created    42s   kubelet            Created container myapp
+  Normal  Started    42s   kubelet            Started container myapp
+
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl top pods myapp-pod-req
+NAME            CPU(cores)   MEMORY(bytes)   
+myapp-pod-req   0m           1Mi          
+
+
+myapp-pod-req 파드가 실행되는 노드 kube-node3에 대한 상세정보를 확인해보자.
+[vagrant@kube-control1 10.autoscaling]$ kubectl describe nodes kube-node3
+Name:               kube-node3
+Roles:              <none>
+Labels:             beta.kubernetes.io/arch=amd64
+                    beta.kubernetes.io/os=linux
+                    kubernetes.io/arch=amd64
+                    kubernetes.io/hostname=kube-node3
+                    kubernetes.io/os=linux
+Annotations:        kubeadm.alpha.kubernetes.io/cri-socket: /var/run/dockershim.sock
+                    node.alpha.kubernetes.io/ttl: 0
+                    projectcalico.org/IPv4Address: 192.168.56.23/24
+                    projectcalico.org/IPv4IPIPTunnelAddr: 192.168.119.128
+                    volumes.kubernetes.io/controller-managed-attach-detach: true
+CreationTimestamp:  Thu, 09 Feb 2023 02:10:49 +0000
+Taints:             <none>
+Unschedulable:      false
+Lease:
+  HolderIdentity:  kube-node3
+  AcquireTime:     <unset>
+  RenewTime:       Wed, 22 Feb 2023 07:34:22 +0000
+Conditions:
+  Type                 Status  LastHeartbeatTime                 LastTransitionTime                Reason                       Message
+  ----                 ------  -----------------                 ------------------                ------                       -------
+  NetworkUnavailable   False   Wed, 22 Feb 2023 03:03:12 +0000   Wed, 22 Feb 2023 03:03:12 +0000   CalicoIsUp                   Calico is running on this node
+  MemoryPressure       False   Wed, 22 Feb 2023 07:32:37 +0000   Wed, 22 Feb 2023 03:00:52 +0000   KubeletHasSufficientMemory   kubelet has sufficient memory available
+  DiskPressure         False   Wed, 22 Feb 2023 07:32:37 +0000   Wed, 22 Feb 2023 03:00:52 +0000   KubeletHasNoDiskPressure     kubelet has no disk pressure
+  PIDPressure          False   Wed, 22 Feb 2023 07:32:37 +0000   Wed, 22 Feb 2023 03:00:52 +0000   KubeletHasSufficientPID      kubelet has sufficient PID available
+  Ready                True    Wed, 22 Feb 2023 07:32:37 +0000   Wed, 22 Feb 2023 03:00:52 +0000   KubeletReady                 kubelet is posting ready status. AppArmor enabled
+Addresses:
+  InternalIP:  192.168.56.23
+  Hostname:    kube-node3
+Capacity:
+  cpu:                1
+  ephemeral-storage:  50745656Ki
+  hugepages-2Mi:      0
+  memory:             2031012Ki
+  pods:               110
+Allocatable:
+  cpu:                1
+  ephemeral-storage:  46767196493
+  hugepages-2Mi:      0
+  memory:             1928612Ki
+  pods:               110
+System Info:
+  Machine ID:                 42ac89265c354040aa139adb9fb87c32
+  System UUID:                fd1756c1-6a66-fb4f-a603-4caf11a6503d
+  Boot ID:                    2fe2db29-7481-4322-924f-ec7a8427af41
+  Kernel Version:             5.4.0-139-generic
+  OS Image:                   Ubuntu 20.04.5 LTS
+  Operating System:           linux
+  Architecture:               amd64
+  Container Runtime Version:  docker://23.0.0
+  Kubelet Version:            v1.22.10
+  Kube-Proxy Version:         v1.22.10
+PodCIDR:                      192.168.1.0/24
+PodCIDRs:                     192.168.1.0/24
+
+* 현재 실행 중인 Pod에 대한 정보 확인 
+Non-terminated Pods:          (6 in total)
+현재 노드에서 활성화된 파드의 목록이며 각 파드의 리소스 요청 및 제한을 확인할 수 있다.
+                                                            CPU 요청      CPU 최대치  메모리 요청      메모리 최대치     
+  Namespace                   Name                          CPU Requests  CPU Limits  Memory Requests  Memory Limits  Age
+  ---------                   ----                          ------------  ----------  ---------------  -------------  ---
+*   default                     myapp-pod-req                 200m (20%)    0 (0%)      10Mi (0%)        0 (0%)         2m38s
+  default                     myapp-rs-ncsq7                0 (0%)        0 (0%)      0 (0%)           0 (0%)         22h
+  kube-system                 calico-node-7jx4j             250m (25%)    0 (0%)      0 (0%)           0 (0%)         13d
+  kube-system                 kube-proxy-kdlr8              0 (0%)        0 (0%)      0 (0%)           0 (0%)         13d
+  metallb-system              controller-77c44876d-bqbsf    0 (0%)        0 (0%)      0 (0%)           0 (0%)         5d22h
+  metallb-system              speaker-6mmpp                 0 (0%)        0 (0%)      0 (0%)           0 (0%)         5d22h
+
+할당된 리소스 정보 확인
+* Allocated resources:
+현재 노드에 배치된 모든 파드의 총 리소스 요청량 및 제한량을 확인할 수 있다.
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests    Limits
+  --------           --------    ------
+  cpu                450m (45%)  0 (0%)
+  memory             10Mi (0%)   0 (0%)
+  ephemeral-storage  0 (0%)      0 (0%)
+  hugepages-2Mi      0 (0%)      0 (0%)
+Events:              <none>
+
+cf) 단위에 대한 고찰
+https://www.youtube.com/watch?v=eNYqmXynBfI
+https://www.youtube.com/watch?v=R96iJpVM8ZA

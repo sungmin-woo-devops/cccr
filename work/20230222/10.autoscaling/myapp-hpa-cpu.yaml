@@ -1,0 +1,12 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: myapp-hpa-cpu
+spec:
+  scaleTargetRef:                     # HPA 리소스가 복제본을 제어할 대상 컨트롤러(vs. label selector)
+    apiVersion: apps/v1               # 대상 컨트롤러 API 버전
+    kind: Deployment                  # 대상 컨트롤러 종류
+    name: myapp-deploy-hpa        # 대상 컨트롤러 이름
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70  # CPU 평균 사용량 목표값(비율)

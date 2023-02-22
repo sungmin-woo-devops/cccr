@@ -1,0 +1,20 @@
+The Horizontal Pod Autoscaler (HPA) in Kubernetes uses the scaleTargetRef instead of label selector to reference the resource to be scaled because it needs to identify a specific resource that can be scaled based on its characteristics. The scaleTargetRef field allows the HPA to reference the exact object it needs to scale, without ambiguity.
+
+Here are a few reasons why scaleTargetRef is preferred over label selector:
+
+Precision: With scaleTargetRef, the HPA can refer to a specific resource using its API version, kind, and name, which eliminates any ambiguity that may arise when using a label selector. Using a label selector can lead to multiple resources with the same label, making it difficult to identify the resource to be scaled.
+
+Stability: The scaleTargetRef provides a more stable reference to the target resource, as compared to using label selectors. Label selectors are dynamic, and changes to the labels of the resource can affect the accuracy of the HPA.
+
+Simplicity: scaleTargetRef provides a simple and direct way to reference the target resource, whereas using label selectors would require additional filtering and logic to find the correct resource.
+
+Overall, the scaleTargetRef is a more precise, stable, and simpler way to reference the target resource, making it the preferred method for HPA to identify the resource that needs to be scaled.
+
+https://chat.openai.com/chat
+
+파드를 관리할 때는 label인데
+
+관리하는 종류가 하나면 라벨로 해도 되지만
+
+여러 컨트롤러에 대한 제어를 해주기 때문에 
+관리하는 오브젝트의 버전이 다양하기에 좀 더 명확하게 오브젝트들을 식별하기 위해 scaleTargetRef를 사용한다.

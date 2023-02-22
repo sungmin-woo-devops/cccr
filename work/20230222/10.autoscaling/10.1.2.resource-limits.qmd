@@ -1,0 +1,89 @@
+[vagrant@kube-control1 10.autoscaling]$ kubectl create -f myapp-pod-limits.yaml
+pod/myapp-pod-lim created
+
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl get pods
+NAME                                      READY   STATUS    RESTARTS         AGE
+myapp-pod-huge-req                        0/1     Pending   0                6m41s
+myapp-pod-lim                             1/1     Running   0                4s
+myapp-pod-req                             1/1     Running   0                17m
+myapp-rs-5tzdf                            1/1     Running   2 (4h49m ago)    23h
+myapp-rs-jvjsm                            1/1     Running   2 (4h49m ago)    23h
+myapp-rs-ncsq7                            1/1     Running   2 (4h48m ago)    23h
+myapp-sts-0                               1/1     Running   0                114m
+myapp-sts-1                               1/1     Running   0                114m
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   10 (4h46m ago)   2d2h
+
+
+[vagrant@kube-control1 10.autoscaling]$ kubectl describe pod myapp-pod-lim
+Name:         myapp-pod-lim
+Namespace:    default
+Priority:     0
+Node:         kube-node2/192.168.56.22
+Start Time:   Wed, 22 Feb 2023 07:49:31 +0000
+Labels:       <none>
+Annotations:  cni.projectcalico.org/containerID: b47e53f3a9204b66499619712ce404bd6d48c9a50352a9502c6c311b75c22829
+              cni.projectcalico.org/podIP: 192.168.233.249/32
+              cni.projectcalico.org/podIPs: 192.168.233.249/32
+Status:       Running
+IP:           192.168.233.249
+IPs:
+  IP:  192.168.233.249
+Containers:
+  myapp:
+    Container ID:   docker://e23db68c6de9d03eac19411a00e70dd0ba0a2182281d9a4b43b08c3cbbd9fea6
+    Image:          ghcr.io/c1t1d0s7/go-myweb:alpine
+    Image ID:       docker-pullable://ghcr.io/c1t1d0s7/go-myweb@sha256:925dd88b5abbe7b9c8dbbe97c28d50178da1d357f4f649c6bc10a389fe5a6a55
+    Port:           <none>
+    Host Port:      <none>
+    State:          Running
+      Started:      Wed, 22 Feb 2023 07:49:32 +0000
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  20Mi
+    Requests:
+      cpu:        500m
+      memory:     20Mi
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-dknpd (ro)
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+Volumes:
+  kube-api-access-dknpd:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Guaranteed
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  20s   default-scheduler  Successfully assigned default/myapp-pod-lim to kube-node2
+  Normal  Pulled     19s   kubelet            Container image "ghcr.io/c1t1d0s7/go-myweb:alpine" already present on machine
+  Normal  Created    19s   kubelet            Created container myapp
+  Normal  Started    19s   kubelet            Started container myapp
+
+myapp-pod-lim 파드 자원 사용량 확인
+[vagrant@kube-control1 10.autoscaling]$ kubectl top pods myapp-pod-lim
+NAME            CPU(cores)   MEMORY(bytes)   
+myapp-pod-lim   1m           1Mi 
+
+리소스에 제한을 건 Pod에 CPU 부하를 주자(새 터미널)
+[vagrant@kube-control1 10.autoscaling]$ kubectl exec myapp-pod-lim -- sha256sum /dev/zero
+
+해당 파드의 리소스 사용 현황 확인
+[vagrant@kube-control1 ~]$ kubectl top pods myapp-pod-lim
+NAME            CPU(cores)   MEMORY(bytes)   
+myapp-pod-lim   500m         1Mi                <- 제한 용량인 0.5 코어까지 리소스가 사용됨을 확인할 수 있음         
+
