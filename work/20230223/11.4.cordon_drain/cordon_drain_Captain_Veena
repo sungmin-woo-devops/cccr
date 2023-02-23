@@ -1,0 +1,47 @@
+kubectl get po -o wide
+
+kubectl get nodes
+
+커든 설정
+kubectl cordon kube-node1
+- kubectl get nodes -> STATUS: SchedulingDisabled
+- kubectl describe node kube-node1 -> Unschedulable: true
+
+---
+
+pod를 다른 워커노드로 shift
+
+새로운 파드의 생성을 막지만
+기존 파드에 대한 설정은 아님
+
+kubectl get pods -A
+kubectl get pods -A -o wode | more
+ls -lrth
+
+
+more pod.yaml
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  createTimestamp: null
+  labels:
+    run: nginxpod
+  name: nginxpod
+spec:
+  nodeSelector:
+    node: worker1
+  containers:
+  - image: nginx
+    name: nginxpod
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+---
+
+
+
+
+---
+https://www.youtube.com/watch?v=AMsbcl9J2YA
+

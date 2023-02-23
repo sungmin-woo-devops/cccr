@@ -1,30 +1,21 @@
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
-  name: myapp-rs-aff-front
+  name: myapp-rs-notol
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: myapp-rs-aff-front
-      tier: frontend
+      app: myapp-rs-notol
+      tier: backend
   template:
     metadata:
       labels:
-        app: myapp-rs-aff-front
-        tier: frontend
+        app: myapp-rs-notol
+        tier: backend
     spec:
       affinity:
         podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: tier
-                    operator: In
-                    values:
-                      - frontend
-              topologyKey: "kubernetes.io/hostname"
-        podAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchExpressions:

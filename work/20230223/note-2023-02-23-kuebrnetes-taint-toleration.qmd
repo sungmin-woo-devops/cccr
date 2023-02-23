@@ -1,0 +1,3 @@
+kubectl taint node NODE_NAME [KEY=VALUE][:EFFECT]
+
+

@@ -94,4 +94,258 @@ kube-node2      Ready    <none>                 13d   v1.22.10   beta.kubernetes
 kube-node3      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu-mode=1660,gpu=lowend,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node3,kubernetes.io/os=linux
 
 
+---
+파드 어피니티
+
+tier: cache 라벨 파드끼리 안티 파드어피니티
+tier: front 라벨 파드끼리 안티 파드어피니티
+tier: cache 라벨 파드와 tier: front 라벨 파드끼리 파드어피니티
+
+[vagrant@kube-control1 20230223]$ kubectl create -f myapp-rs-podaff-front.yaml
+replicaset.apps/myapp-rs-aff-front created
+[vagrant@kube-control1 20230223]$ k get po -o wide
+NAME                                      READY   STATUS    RESTARTS       AGE     IP                NODE         NOMINATED NODE   READINESS GATES
+myapp-rs-aff-cache-c6ck2                  1/1     Running   0              13m     192.168.119.178   kube-node3   <none>           <none>
+myapp-rs-aff-cache-twqlh                  1/1     Running   0              13m     192.168.233.253   kube-node2   <none>           <none>
+myapp-rs-aff-front-7g5xt                  1/1     Running   0              5s      192.168.233.193   kube-node2   <none>           <none>
+myapp-rs-aff-front-qfvhd                  1/1     Running   0              5s      192.168.119.179   kube-node3   <none>           <none>
+
+
+파드 어피니티 예시 스케일 아웃/인
+
+[vagrant@kube-control1 20230223]$ k scale rs myapp-rs-aff-cache --replicas=3
+replicaset.apps/myapp-rs-aff-cache scaled
+[vagrant@kube-control1 20230223]$ k get po -o wide
+NAME                                      READY   STATUS    RESTARTS       AGE     IP                NODE         NOMINATED NODE   READINESS GATES
+myapp-rs-aff-cache-bfc7z                  1/1     Running   0              7s      192.168.9.109     kube-node1   <none>           <none>
+myapp-rs-aff-cache-c6ck2                  1/1     Running   0              28m     192.168.119.178   kube-node3   <none>           <none>
+myapp-rs-aff-cache-twqlh                  1/1     Running   0              28m     192.168.233.253   kube-node2   <none>           <none>
+myapp-rs-aff-front-7g5xt                  1/1     Running   0              14m     192.168.233.193   kube-node2   <none>           <none>
+myapp-rs-aff-front-qfvhd                  1/1     Running   0              14m     192.168.119.179   kube-node3   <none>           <none>
+myapp-rs-nodeaff-mthgf                    0/1     Pending   0              55m     <none>            <none>       <none>           <none>
+myapp-rs-nodeaff-z6kgq                    0/1     Pending   0              55m     <none>            <none>       <none>           <none>
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   11 (17h ago)   2d21h   192.168.233.252   kube-node2   <none>           <none>
+[vagrant@kube-control1 20230223]$ kubectl scale replicaset myapp-rs-aff-front --replicas=3
+replicaset.apps/myapp-rs-aff-front scaled
+[vagrant@kube-control1 20230223]$ k get po -o wide
+NAME                                      READY   STATUS    RESTARTS       AGE     IP                NODE         NOMINATED NODE   READINESS GATES
+myapp-rs-aff-cache-bfc7z                  1/1     Running   0              44s     192.168.9.109     kube-node1   <none>           <none>
+myapp-rs-aff-cache-c6ck2                  1/1     Running   0              28m     192.168.119.178   kube-node3   <none>           <none>
+myapp-rs-aff-cache-twqlh                  1/1     Running   0              28m     192.168.233.253   kube-node2   <none>           <none>
+myapp-rs-aff-front-7g5xt                  1/1     Running   0              15m     192.168.233.193   kube-node2   <none>           <none>
+myapp-rs-aff-front-mxvgj                  1/1     Running   0              7s      192.168.9.110     kube-node1   <none>           <none>
+myapp-rs-aff-front-qfvhd                  1/1     Running   0              15m     192.168.119.179   kube-node3   <none>           <none>
+myapp-rs-nodeaff-mthgf                    0/1     Pending   0              55m     <none>            <none>       <none>           <none>
+myapp-rs-nodeaff-z6kgq                    0/1     Pending   0              55m     <none>            <none>       <none>           <none>
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   11 (17h ago)   2d21h   192.168.233.252   kube-node2   <none>           <none>
+
+
+가장 나중에 만들어진 파드(kube-node1 노드에 있던)가 삭제됨을 확인할 수 있다.
+
+[vagrant@kube-control1 20230223]$ kubectl scale replicasets myapp-rs-aff-cache --replicas=2
+replicaset.apps/myapp-rs-aff-cache scaled
+[vagrant@kube-control1 20230223]$ kubectl scale replicasets myapp-rs-aff-front --replicas=2
+replicaset.apps/myapp-rs-aff-front scaled
+[vagrant@kube-control1 20230223]$ k get po -o wide
+NAME                                      READY   STATUS    RESTARTS       AGE     IP                NODE         NOMINATED NODE   READINESS GATES
+myapp-rs-aff-cache-c6ck2                  1/1     Running   0              29m     192.168.119.178   kube-node3   <none>           <none>
+myapp-rs-aff-cache-twqlh                  1/1     Running   0              29m     192.168.233.253   kube-node2   <none>           <none>
+myapp-rs-aff-front-7g5xt                  1/1     Running   0              16m     192.168.233.193   kube-node2   <none>           <none>
+myapp-rs-aff-front-qfvhd                  1/1     Running   0              16m     192.168.119.179   kube-node3   <none>           <none>
+myapp-rs-nodeaff-mthgf                    0/1     Pending   0              56m     <none>            <none>       <none>           <none>
+myapp-rs-nodeaff-z6kgq                    0/1     Pending   0              56m     <none>            <none>       <none>           <none>
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   11 (17h ago)   2d21h   192.168.233.252   kube-node2   <none>           <none>
+
+---
+
+테인트 & 톨러레이션
+
+[vagrant@kube-control1 20230223]$ kubectl describe nodes kube-control1 | grep Taints
+Taints:             node-role.kubernetes.io/master:NoSchedule
+[vagrant@kube-control1 20230223]$ kubectl get nodes \
+> -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.taints}{"\n"}{end}'
+kube-control1	[{"effect":"NoSchedule","key":"node-role.kubernetes.io/master"}]
+kube-node1	
+kube-node2	
+kube-node3
+
+
+[vagrant@kube-control1 20230223]$ kubectl taint nodes kube-node3 env=production:NoSchedule
+node/kube-node3 tainted
+
+---
+
+테인트 & 톨러레이선 X 파드 어피니티
+
+[vagrant@kube-control1 20230223]$ kubectl create -f myapp-rs-podaff-cache.yaml
+replicaset.apps/myapp-rs-aff-cache created
+
+[vagrant@kube-control1 20230223]$ kubectl create -f myapp-rs-podaff-front.yaml
+replicaset.apps/myapp-rs-aff-front created
+
+[vagrant@kube-control1 20230223]$ kubectl scale rs myapp-rs-aff-front --replicas=3
+replicaset.apps/myapp-rs-aff-front scaled
+
+[vagrant@kube-control1 20230223]$ kubectl scale rs myapp-rs-aff-cache --replicas=3
+replicaset.apps/myapp-rs-aff-cache scaled
+
+[vagrant@kube-control1 20230223]$ k get po
+NAME                                      READY   STATUS             RESTARTS       AGE
+myapp-rs-aff-cache-4l7cg                  1/1     Running            0              20s
+myapp-rs-aff-cache-9c8vb                  1/1     Running            0              20s
+myapp-rs-aff-cache-zkwqt                  1/1     Running            0              3s
+myapp-rs-aff-front-d4r6c                  1/1     Running            0              17s
+myapp-rs-aff-front-dvhp8                  1/1     Running            0              8s
+myapp-rs-aff-front-nxtcn                  1/1     Running            0              17s
+nfs-client-provisioner-7c494c767d-fbmhr   0/1     CrashLoopBackOff   37 (56s ago)   3d
+
+[vagrant@kube-control1 20230223]$ k taint node kube-node3 env=production:NoSchedule
+node/kube-node3 tainted
+
+[vagrant@kube-control1 20230223]$ kubectl describe nodes | grep -i taints
+Taints:             node-role.kubernetes.io/master:NoSchedule
+Taints:             <none>
+Taints:             <none>
+Taints:             env=production:NoSchedule
+
+[vagrant@kube-control1 20230223]$ kubectl get pods -o wide
+NAME                                      READY   STATUS             RESTARTS         AGE     IP                NODE         NOMINATED NODE   READINESS GATES
+myapp-rs-aff-cache-4l7cg                  1/1     Running            0                2m43s   192.168.119.181   kube-node3   <none>           <none>
+myapp-rs-aff-cache-9c8vb                  1/1     Running            0                2m43s   192.168.233.195   kube-node2   <none>           <none>
+myapp-rs-aff-cache-zkwqt                  1/1     Running            0                2m26s   192.168.9.107     kube-node1   <none>           <none>
+myapp-rs-aff-front-d4r6c                  1/1     Running            0                2m40s   192.168.119.183   kube-node3   <none>           <none>
+myapp-rs-aff-front-dvhp8                  1/1     Running            0                2m31s   192.168.9.108     kube-node1   <none>           <none>
+myapp-rs-aff-front-nxtcn                  1/1     Running            0                2m40s   192.168.233.255   kube-node2   <none>           <none>
+nfs-client-provisioner-7c494c767d-fbmhr   0/1     CrashLoopBackOff   37 (3m19s ago)   3d      192.168.233.252   kube-node2   <none>           <none>
+
+[vagrant@kube-control1 20230223]$ kubectl create -f  myapp-rs-notol.yaml
+replicaset.apps/myapp-rs-notol created
+
+[vagrant@kube-control1 20230223]$ kubectl get po -o wide
+NAME                                      READY   STATUS             RESTARTS         AGE     IP                NODE         NOMINATED NODE   READINESS GATES
+myapp-rs-aff-cache-4l7cg                  1/1     Running            0                4m12s   192.168.119.181   kube-node3   <none>           <none>
+myapp-rs-aff-cache-9c8vb                  1/1     Running            0                4m12s   192.168.233.195   kube-node2   <none>           <none>
+myapp-rs-aff-cache-zkwqt                  1/1     Running            0                3m55s   192.168.9.107     kube-node1   <none>           <none>
+myapp-rs-aff-front-d4r6c                  1/1     Running            0                4m9s    192.168.119.183   kube-node3   <none>           <none>
+myapp-rs-aff-front-dvhp8                  1/1     Running            0                4m      192.168.9.108     kube-node1   <none>           <none>
+myapp-rs-aff-front-nxtcn                  1/1     Running            0                4m9s    192.168.233.255   kube-node2   <none>           <none>
+myapp-rs-notol-pqw6k                      0/1     Pending            0                11s     <none>            <none>       <none>           <none>
+nfs-client-provisioner-7c494c767d-fbmhr   0/1     CrashLoopBackOff   37 (4m48s ago)   3d      192.168.233.252   kube-node2   <none>           <none>
+[vagrant@kube-control1 20230223]$ kubectl describe po myapp-rs-notol-pqw6k
+Name:           myapp-rs-notol-pqw6k
+Namespace:      default
+Priority:       0
+Node:           <none>
+Labels:         app=myapp-rs-notol
+                tier=backend
+Annotations:    <none>
+Status:         Pending
+IP:             
+IPs:            <none>
+Controlled By:  ReplicaSet/myapp-rs-notol
+Containers:
+  myapp:
+    Image:        ghcr.io/c1t1d0s7/go-myweb:alpine
+    Port:         <none>
+    Host Port:    <none>
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-7qz6g (ro)
+Conditions:
+  Type           Status
+  PodScheduled   False 
+Volumes:
+  kube-api-access-7qz6g:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age   From               Message
+  ----     ------            ----  ----               -------
+  Warning  FailedScheduling  29s   default-scheduler  0/4 nodes are available: 1 node(s) had taint {env: production}, that the pod didn't tolerate, 1 node(s) had taint {node-role.kubernetes.io/master: }, 
+  that the pod didn't tolerate, 2 node(s) didn't match pod anti-affinity rules.
+
+kube-node3의 taint를 생성하려는 Pod가 tolerate하지 못했음. 
+kube-node1, kube-node2에 대해선 해당 노드 상에 있는 cache 파드와 안티 파드 어피니티 관계로 생성이 불가하다.
+
+
+
+[vagrant@kube-control1 20230223]$ kubectl create -f myapp-rs-tol.yaml
+error: error validating "myapp-rs-tol.yaml": error validating data: ValidationError(ReplicaSet.spec.template.spec.tolerations[0]): unknown field "opeator" in io.k8s.api.core.v1.Toleration; if you choose to ignore these errors, turn validation off with --validate=false
+[vagrant@kube-control1 20230223]$ vim myapp-rs-tol.yaml 
+[vagrant@kube-control1 20230223]$ kubectl create -f myapp-rs-tol.yaml
+replicaset.apps/myapp-rs-tol created
+[vagrant@kube-control1 20230223]$ kubectl get pods
+NAME                                      READY   STATUS             RESTARTS         AGE
+myapp-rs-aff-cache-9c8vb                  1/1     Running            0                19m
+myapp-rs-aff-cache-zkwqt                  1/1     Running            0                19m
+myapp-rs-aff-front-dvhp8                  1/1     Running            0                19m
+myapp-rs-aff-front-nxtcn                  1/1     Running            0                19m
+myapp-rs-tol-prhdn                        1/1     Running            0                5s
+nfs-client-provisioner-7c494c767d-fbmhr   0/1     CrashLoopBackOff   40 (3m21s ago)   3d
+[vagrant@kube-control1 20230223]$ kubectl get pods -o wide
+NAME                                      READY   STATUS             RESTARTS         AGE   IP                NODE         NOMINATED NODE   READINESS GATES
+myapp-rs-aff-cache-9c8vb                  1/1     Running            0                20m   192.168.233.195   kube-node2   <none>           <none>
+myapp-rs-aff-cache-zkwqt                  1/1     Running            0                19m   192.168.9.107     kube-node1   <none>           <none>
+myapp-rs-aff-front-dvhp8                  1/1     Running            0                19m   192.168.9.108     kube-node1   <none>           <none>
+myapp-rs-aff-front-nxtcn                  1/1     Running            0                20m   192.168.233.255   kube-node2   <none>           <none>
+myapp-rs-tol-prhdn                        1/1     Running            0                37s   192.168.119.180   kube-node3   <none>           <none>
+nfs-client-provisioner-7c494c767d-fbmhr   0/1     CrashLoopBackOff   40 (3m53s ago)   3d    192.168.233.252   kube-node2   <none>           <none>
+
+
+myapp-rs-tol 파드의 레플리카를 2개로 늘려보면 kube-node3에 하나가 더 생성된다.
+
+
+[vagrant@kube-control1 20230223]$ k get po -o wide
+NAME                                      READY   STATUS    RESTARTS         AGE     IP                NODE         NOMINATED NODE   READINESS GATES
+myapp-rs-aff-cache-9c8vb                  1/1     Running   0                21m     192.168.233.195   kube-node2   <none>           <none>
+myapp-rs-aff-cache-zkwqt                  1/1     Running   0                21m     192.168.9.107     kube-node1   <none>           <none>
+myapp-rs-aff-front-dvhp8                  1/1     Running   0                21m     192.168.9.108     kube-node1   <none>           <none>
+myapp-rs-aff-front-nxtcn                  1/1     Running   0                21m     192.168.233.255   kube-node2   <none>           <none>
+myapp-rs-tol-8vkk6                        1/1     Running   0                13s     192.168.119.182   kube-node3   <none>           <none>
+myapp-rs-tol-prhdn                        1/1     Running   0                2m30s   192.168.119.180   kube-node3   <none>           <none>
+nfs-client-provisioner-7c494c767d-fbmhr   0/1     Error     41 (5m46s ago)   3d      192.168.233.252   kube-node2   <none>           <none>
+
+---
+
+kubectl drain NODE [OPTION] 
+kubectl drain kube-node3
+
+워커노드 kube-node3를 drain 시켜보자.
+
+[vagrant@kube-control1 20230223]$ kubectl drain kube-node3
+node/kube-node3 cordoned
+DEPRECATED WARNING: Aborting the drain command in a list of nodes will be deprecated in v1.23.
+The new behavior will make the drain command go through all nodes even if one or more nodes failed during the drain.
+For now, users can try such experience via: --ignore-errors
+error: unable to drain node "kube-node3", aborting command...
+
+There are pending nodes to be drained:
+ kube-node3
+error: cannot delete DaemonSet-managed Pods (use --ignore-daemonsets to ignore): kube-system/calico-node-7jx4j, kube-system/kube-proxy-kdlr8, metallb-system/speaker-6mmpp
+
+데몬셋이 관리하는 파드들은 drain 하여도 evict되지 않기에 위와 같은 에러가 발생한다.
+따라서 --ignore-daemonsets=true 옵션을 사용하여 파드를 데몬셋으로 제어되는 파드들을 evict한다.
+
+[vagrant@kube-control1 20230223]$ kubectl drain kube-node3 --ignore-daemonsets=true
+node/kube-node3 already cordoned
+WARNING: ignoring DaemonSet-managed Pods: kube-system/calico-node-7jx4j, kube-system/kube-proxy-kdlr8, metallb-system/speaker-6mmpp
+evicting pod metallb-system/controller-77c44876d-bqbsf
+evicting pod default/myapp-rs-cordon-9kpfw
+evicting pod default/myapp-rs-cordon-928c2
+evicting pod ingress-nginx/ingress-nginx-admission-patch-hwszp
+pod/ingress-nginx-admission-patch-hwszp evicted
+pod/controller-77c44876d-bqbsf evicted
+pod/myapp-rs-cordon-928c2 evicted
+pod/myapp-rs-cordon-9kpfw evicted
+node/kube-node3 evicted
+
+
+
 

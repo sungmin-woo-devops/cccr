@@ -1,0 +1,5 @@
+https://www.youtube.com/watch?v=OPg0MRnltOU
+
+Kubernetes Pod Draining for Node Maintenance - Seth Jennings
+
+Cockpit으로 시각화

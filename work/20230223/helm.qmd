@@ -1,0 +1,39 @@
+### Helm, The package manager for Kubernetes
+Helm is the best way to find, share and use software built for Kubernetes
+
+--- 
+애플리케이션을 패키지 형태로 배포할 수 있는 도구이다.
+
+---
+2015.    Helm Classic, KubeCon에서 처음 소개
+2016.    Kubernetes 프로젝트와 통합
+2018.06  CNCF 정식 프로젝트로 승격
+2019.11  Helm v3 출시
+
+---
+Helm 설치 - 패키지 사용
+https://helm.sh/docs/intro/install/
+
+데비안 계열 APT 패키지로 다운로드
+curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+sudo apt-get install apt-transport-https --yes
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo apt-get update
+sudo apt-get install helm
+
+---
+ChatGPT HELM 설치 과정 설명
+
+This script installs Helm, a package manager for Kubernetes. Here's what each line does:
+
+curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null: This line downloads a GPG key from https://baltocdn.com/helm/signing.asc, which is used to sign the Helm packages. The key is then decrypted and saved as /usr/share/keyrings/helm.gpg.
+sudo apt-get install apt-transport-https --yes: This line installs the apt-transport-https package, which allows apt-get to retrieve packages over HTTPS.
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list: This line adds a new package repository to apt-get, which points to the Helm stable repository hosted at https://baltocdn.com/helm/stable/debian/. The tee command writes the repository information to /etc/apt/sources.list.d/helm-stable-debian.list.
+sudo apt-get update: This line updates the package list from the newly added repository.
+sudo apt-get install helm: This line installs the helm package using apt-get.
+Overall, this script downloads the GPG key used to sign the Helm packages, adds a new package repository to apt-get that points to the Helm stable repository, updates the package list, and finally installs the helm package.
+
+
+
+
+

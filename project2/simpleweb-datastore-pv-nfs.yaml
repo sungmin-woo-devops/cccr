@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: simpleweb-datastore-pv
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteMany
+  PersistentVolumeReclaimPolicy: Retain # 조건 명시 없었음(임의)
+  nfs:
+    path: /srv/volume-static
+    server: 192.168.56.11
