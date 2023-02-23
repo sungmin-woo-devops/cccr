@@ -1,0 +1,97 @@
+[vagrant@kube-control1 20230223]$ kubectl get nodes --show-labels
+NAME            STATUS   ROLES                  AGE   VERSION    LABELS
+kube-control1   Ready    control-plane,master   13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-control1,kubernetes.io/os=linux,node-role.kubernetes.io/control-plane=,node-role.kubernetes.io/master=,node.kubernetes.io/exclude-from-external-load-balancers=
+kube-node1      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node1,kubernetes.io/os=linux
+kube-node2      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node2,kubernetes.io/os=linux
+kube-node3      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node3,kubernetes.io/os=linux
+
+
+[vagrant@kube-control1 20230223]$ kubectl label node kube-node1 gpu=highend
+node/kube-node1 labeled
+[vagrant@kube-control1 20230223]$ kubectl label node kube-node2 gpu=midrange
+node/kube-node2 labeled
+
+
+[vagrant@kube-control1 20230223]$ kubectl label node kube-node3 gpu=lowend
+node/kube-node3 labeled
+
+
+[vagrant@kube-control1 20230223]$ kubectl get nodes --show-labels
+NAME            STATUS   ROLES                  AGE   VERSION    LABELS
+kube-control1   Ready    control-plane,master   13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-control1,kubernetes.io/os=linux,node-role.kubernetes.io/control-plane=,node-role.kubernetes.io/master=,node.kubernetes.io/exclude-from-external-load-balancers=
+kube-node1      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu=highend,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node1,kubernetes.io/os=linux
+kube-node2      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu=midrange,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node2,kubernetes.io/os=linux
+kube-node3      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu=lowend,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node3,kubernetes.io/os=linux
+
+
+[vagrant@kube-control1 20230223]$ kubectl get nodes --show-labels | grep gpu
+kube-node1      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu=highend,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node1,kubernetes.io/os=linux
+kube-node2      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu=midrange,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node2,kubernetes.io/os=linux
+kube-node3      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu=lowend,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node3,kubernetes.io/os=linux
+
+
+[vagrant@kube-control1 20230223]$ k create -f myapp-rs-ns.yaml
+replicaset.apps/myapp-rs-ns created
+
+
+[vagrant@kube-control1 20230223]$ k get po -o wide
+NAME                                      READY   STATUS    RESTARTS       AGE     IP                NODE         NOMINATED NODE   READINESS GATES
+myapp-pod-req                             1/1     Running   1 (16h ago)    17h     192.168.119.171   kube-node3   <none>           <none>
+myapp-rs-5tzdf                            1/1     Running   3 (36m ago)    40h     192.168.9.100     kube-node1   <none>           <none>
+myapp-rs-jvjsm                            1/1     Running   3 (16h ago)    40h     192.168.233.250   kube-node2   <none>           <none>
+myapp-rs-ncsq7                            1/1     Running   3 (16h ago)    40h     192.168.119.177   kube-node3   <none>           <none>
+myapp-rs-ns-5p4tn                         1/1     Running   0              10s     192.168.9.105     kube-node1   <none>           <none>
+myapp-rs-ns-5xcw9                         1/1     Running   0              10s     192.168.9.104     kube-node1   <none>           <none>
+myapp-sts-0                               1/1     Running   1 (16h ago)    19h     192.168.233.254   kube-node2   <none>           <none>
+myapp-sts-1                               1/1     Running   1 (36m ago)    19h     192.168.9.103     kube-node1   <none>           <none>
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   11 (16h ago)   2d19h   192.168.233.252   kube-node2   <none>           <none>
+
+---
+
+[vagrant@kube-control1 20230223]$ k get po -o wide | grep myapp-rs-ns
+myapp-rs-ns-5p4tn                         1/1     Running   0              105s    192.168.9.105     kube-node1   <none>           <none>
+myapp-rs-ns-5xcw9                         1/1     Running   0              105s    192.168.9.104     kube-node1   <none>           <none>
+
+[vagrant@kube-control1 20230223]$ kubectl scale replicaset myapp-rs-ns --replicas=3
+replicaset.apps/myapp-rs-ns scaled
+[vagrant@kube-control1 20230223]$ k get po -o wide
+NAME                                      READY   STATUS    RESTARTS       AGE     IP                NODE         NOMINATED NODE   READINESS GATES
+myapp-pod-req                             1/1     Running   1 (16h ago)    17h     192.168.119.171   kube-node3   <none>           <none>
+myapp-rs-5tzdf                            1/1     Running   3 (39m ago)    40h     192.168.9.100     kube-node1   <none>           <none>
+myapp-rs-jvjsm                            1/1     Running   3 (16h ago)    40h     192.168.233.250   kube-node2   <none>           <none>
+myapp-rs-ncsq7                            1/1     Running   3 (16h ago)    40h     192.168.119.177   kube-node3   <none>           <none>
+myapp-rs-ns-2sjzj                         1/1     Running   0              5s      192.168.9.106     kube-node1   <none>           <none>
+myapp-rs-ns-5p4tn                         1/1     Running   0              3m23s   192.168.9.105     kube-node1   <none>           <none>
+myapp-rs-ns-5xcw9                         1/1     Running   0              3m23s   192.168.9.104     kube-node1   <none>           <none>
+myapp-sts-0                               1/1     Running   1 (16h ago)    19h     192.168.233.254   kube-node2   <none>           <none>
+myapp-sts-1                               1/1     Running   1 (39m ago)    19h     192.168.9.103     kube-node1   <none>           <none>
+nfs-client-provisioner-7c494c767d-fbmhr   1/1     Running   11 (16h ago)   2d19h   192.168.233.252   kube-node2   <none>           <none>
+[vagrant@kube-control1 20230223]$ k get po -o wide | grep myapp-rs-ns
+myapp-rs-ns-2sjzj                         1/1     Running   0              15s     192.168.9.106     kube-node1   <none>           <none>
+myapp-rs-ns-5p4tn                         1/1     Running   0              3m33s   192.168.9.105     kube-node1   <none>           <none>
+myapp-rs-ns-5xcw9                         1/1     Running   0              3m33s   192.168.9.104     kube-node1   <none>           <none>
+
+---
+노드 어피니티
+
+[vagrant@kube-control1 20230223]$ kubectl label node kube-node1 gpu-mode-3080
+error: at least one label update is required
+[vagrant@kube-control1 20230223]$ kubectl label node kube-node1 gpu-mode=3080
+node/kube-node1 labeled
+[vagrant@kube-control1 20230223]$ kubectl label node kube-node2 gpu-mode=2080
+node/kube-node2 labeled
+[vagrant@kube-control1 20230223]$ kubectl label node kube-node3 gpu-mode=1660
+node/kube-node3 labeled
+[vagrant@kube-control1 20230223]$ kubectl get nodes --show-labels
+NAME            STATUS   ROLES                  AGE   VERSION    LABELS
+kube-control1   Ready    control-plane,master   13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-control1,kubernetes.io/os=linux,node-role.kubernetes.io/control-plane=,node-role.kubernetes.io/master=,node.kubernetes.io/exclude-from-external-load-balancers=
+kube-node1      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu-mode=3080,gpu=highend,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node1,kubernetes.io/os=linux
+kube-node2      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu-mode=2080,gpu=midrange,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node2,kubernetes.io/os=linux
+kube-node3      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu-mode=1660,gpu=lowend,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node3,kubernetes.io/os=linux
+[vagrant@kube-control1 20230223]$ kubectl get nodes --show-labels | grep gpu-mode
+kube-node1      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu-mode=3080,gpu=highend,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node1,kubernetes.io/os=linux
+kube-node2      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu-mode=2080,gpu=midrange,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node2,kubernetes.io/os=linux
+kube-node3      Ready    <none>                 13d   v1.22.10   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,gpu-mode=1660,gpu=lowend,kubernetes.io/arch=amd64,kubernetes.io/hostname=kube-node3,kubernetes.io/os=linux
+
+
+

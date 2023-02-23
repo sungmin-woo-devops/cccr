@@ -1,0 +1,13 @@
+애플리케이션 처리를 빠르게 할 수 있다.
+
+CPU만 있는 노드 같은 경우에는 
+GPU에 특화된 어떤 라이브러리 ex) CUDA를 사용할 수 없다.
+
+머신러닝, 딥러닝 작업을 해야하는 파드는 GPU가 할당된 노드에서 진행되어야 한다.
+
+이렇게 파드 실행의 필요한 환경적 조건에 부하하는 노드를 선택하여
+파드를 할당하는 방법에 대하여 공부해보자.
+
+https://bcho.tistory.com/1344?category=731548
+https://bcho.tistory.com/1346?category=731548
+https://bcho.tistory.com/1346?category=731548
