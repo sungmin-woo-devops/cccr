@@ -8,5 +8,5 @@ spec:
   resources:
     requests:
       storage: 2Gi
-  volumeName: datastore
-  # storageClassName: '' 동적 프로비저닝 사용 x
+  volumeName: simpleweb-datastore-pv
+  storageClassName: ''

@@ -8,34 +8,39 @@ spec:
   replicas: 2
   selector:
     matchExpressions:
-      app: simpleweb-rs
-      access: public
+      - key: app
+        operator: In
+        values: 
+          - simpleweb-rs
+      - key: access
+        operator: In
+        values: 
+          - public
   template:
     metadata:
       labels:
         app: simpleweb-rs
+        access: public
     spec:
       # 컨테이너 정의
       containers:
-        name: simple-web-php
-        image: sungminwoo0612/my-simple-web:1.0
-        args:
-          - -port=8080
-        ports:
-          containerPort: 8080
-          protocol: TCP
-        readinessProbe:
-          httpGet:
-            path: /           # 임의
-            port: 8080
-          initialDelaySeconds: 15  # 상황에 따라 임의 조정 가능
-            # timeout: timeoutSeconds 프로브 타임아웃
-            # period: periodSeconds 프로브 주기
-        volumeMounts:
-          - name: datastore
-            mountPath: /srv/datastore/simple-web-php
-      # 볼륨 정의
+        - name: simple-web-php
+          image: sungminwoo0612/my-simple-web:1.0
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /           # 임의
+              port: 8080
+            initialDelaySeconds: 15  # 상황에 따라 임의 조정 가능
+              # timeout: timeoutSeconds 프로브 타임아웃
+              # period: periodSeconds 프로브 주기
+          volumeMounts:
+            - name: datastore
+              mountPath: /srv/datastore/simple-web-php
+        # 볼륨 정의
       volumes: 
-        name: datastore
-        persistentVolumeClaim:
-          claimName: simpleweb-datastore-pvc  # PVC 리소스 이름
+        - name: datastore
+          persistentVolumeClaim:
+            claimName: simpleweb-datastore-pvc  # PVC 리소스 이름

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simpleweb-test-pod
+spec:
+  containers:
+    - name: simpleweb-test
+      image: sungminwoo0612/my-simple-web:1.0
+      ports:
+        - containerPort: 8080
+          protocol: TCP
