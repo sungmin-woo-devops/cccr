@@ -20,14 +20,3 @@ data:
       protocol: layer2
       addresses:
       - 192.168.56.200-192.168.56.210
-kind: ConfigMap
-metadata:
-  namespace: metallb-system
-  name: config
-data:
-  config: |
-    address-pools:
-    - name: default
-      protocol: layer2
-      addresses:
-      - 192.168.56.200-192.168.56.210
