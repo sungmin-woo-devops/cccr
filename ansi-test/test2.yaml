@@ -1,0 +1,7 @@
+- name: play2
+  hosts: BB
+  gather_facts: no # false, False, FALSE, 0
+  tasks: 
+  - name: task1
+    debug: 
+      msg: "no gathering facts"

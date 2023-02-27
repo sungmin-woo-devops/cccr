@@ -1,0 +1,17 @@
+ansi-master1
+
+[AA]
+ansi-node1
+ansi-node2
+
+[BB]
+ansi-node2
+ansi-node3
+
+[CC]
+ansi-node3
+ansi-node1
+
+[DD:children]
+AA
+BB

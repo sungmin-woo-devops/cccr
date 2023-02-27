@@ -1,0 +1,13 @@
+- name: multi module
+  hosts: ansi-node3
+  gather_facts: 0
+  tasks:
+  - name: Install Apache2
+    apt:
+      name: apache2
+      update_cache: yes
+      state: present
+  - name: Restart Apache2
+    service:
+      name: apache2
+      state: restarted
