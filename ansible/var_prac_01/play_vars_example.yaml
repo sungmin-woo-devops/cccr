@@ -1,0 +1,49 @@
+- name: Deploy and start Apache HTTPD service
+  hosts: AA
+  vars:
+    options:
+      pkg:
+        - apache2
+        - firewalld
+      states:
+        - present
+        - latest
+        - started
+        - enabled
+      bools:
+        - yes
+        - no
+      rule: http
+  tasks:
+    - name: Required packages are installed and up to date
+      apt:
+        name:
+          - "{{ options.pkg[0] }}"      # web package
+          - "{{ options.pkg[1] }}"      # 방화벽 package
+        state: "{{ options.state[1] }}" # 마지막 버전 지정
+
+    - name: The web service is started and enabled
+      service:
+        name: "{{ options.pkg[0] }}"
+        enabled: "{{ options.bools[0] }}" # 활성화 여부 True
+        state: "{{ options.state[2] }}"   # service 시작
+
+    - name: The firewalld service it started and enabled
+      service:
+        name: "{{ options.pkg[1] }}"
+        enabled: "{{ options.bools[0] }}" # 활성화 여부 True
+        state: "{{ options.state[2] }}"   # service 시작
+
+    - name: Web content is in place # copy 모듈로 파일 생성
+      service:
+        name: "{{ options.pkg[1] }}"
+        enabled: "{{ options.bools[0] }}"  # 활성화 여부 True
+        state: "{{ options.states[2] }}"   # service 시작
+
+    # name 키워드에도 변수 사용 가능
+    - name: "The {{ options.rule }} port for web is open"
+      firewalld:
+        service: "{{ options.rule }}"       # 포트를 열고자 하는 서비스명
+        permanent: "{{ options.bools[0] }}" # 영구 설정 여부
+        immediate: "{{ options.bools[0] }}" # 런타임 설정
+        state: "{{ options.states[3]  }}"   # 활성화 상태

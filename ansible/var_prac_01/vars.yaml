@@ -1,0 +1,8 @@
+- name: vars test
+  hosts: AA
+  gather_facts: no
+  vars:
+    - username1: student
+  tasks:
+    - debug:
+        msg: "{{ username1 }}"

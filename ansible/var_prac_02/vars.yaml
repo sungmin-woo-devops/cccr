@@ -1,0 +1,6 @@
+- name: vars test
+  hosts: AA
+  gather-facts: no
+  tasks:
+    - debug: 
+        msg: "{{ username }}"

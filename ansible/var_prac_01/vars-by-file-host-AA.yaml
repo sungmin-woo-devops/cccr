@@ -1,0 +1,12 @@
+- name: vars test
+  hosts: AA
+  gather_facts: no
+#  vars:
+#    - username1: student
+  tasks:
+    - debug:
+        # 변수 문장에 가장 앞에 오면 따옴표 사용
+        msg: "{{ username1 }}"
+    - debug:
+        # 변수가 앞에 오지 않으면 따옴표 사용 X
+        msg: "username is {{ username1 }}"

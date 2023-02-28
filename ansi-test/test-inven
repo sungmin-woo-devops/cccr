@@ -1,9 +1,0 @@
-[web]
-www[01:20].example.com
-
-[db]
-www[01:19:2].example.com
-
-[conf]
-
-www[a:c].example.com

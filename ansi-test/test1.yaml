@@ -1,9 +1,0 @@
----
-
-- name: play1
-  hosts: AA
-  tasks:
-  - name: task1
-    debug:
-      msg: "task1"
-...
